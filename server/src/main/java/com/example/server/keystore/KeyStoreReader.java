@@ -1,7 +1,13 @@
 package com.example.server.keystore;
 
 import com.example.server.data.IssuerData;
+import com.example.server.dto.CertificateDTO;
+import com.example.server.dto.CertificateExchangeDTO;
+import com.example.server.enumeration.KeyUsages;
+import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x500.style.BCStyle;
+import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 
 import java.io.BufferedInputStream;
@@ -9,9 +15,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.*;
+import java.security.cert.*;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Enumeration;
+
 
 public class KeyStoreReader {
 
@@ -134,4 +142,84 @@ public class KeyStoreReader {
         }
         return null;
     }
+
+    public ArrayList<CertificateExchangeDTO> findCACerts(KeyStore ks) throws KeyStoreException, CertificateEncodingException {
+        ArrayList<CertificateExchangeDTO> certificateDTOList = new ArrayList<>();
+        Enumeration<String> aliases = ks.aliases();
+        while(aliases.hasMoreElements()) {
+            String entry = aliases.nextElement();
+            System.out.println(entry);
+            X509Certificate cert = (X509Certificate) ks.getCertificate(entry);
+
+            System.out.println(cert.getIssuerX500Principal().getName());
+            if(cert.getKeyUsage()[5]) {
+                X500Name x500name = new JcaX509CertificateHolder(cert).getSubject();
+                RDN cn = x500name.getRDNs(BCStyle.CN)[0];
+                RDN org = x500name.getRDNs(BCStyle.O)[0];
+                RDN email = x500name.getRDNs(BCStyle.E)[0];
+
+                X500Name x500nameIssuer = new JcaX509CertificateHolder(cert).getIssuer();
+                RDN cnIssuer = x500nameIssuer.getRDNs(BCStyle.CN)[0];
+                certificateDTOList.add(new CertificateExchangeDTO(IETFUtils.valueToString(cn.getFirst().getValue()), IETFUtils.valueToString(org.getFirst().getValue()), IETFUtils.valueToString(email.getFirst().getValue()), IETFUtils.valueToString(cnIssuer.getFirst().getValue()), cert.getSerialNumber()));
+            }
+        }
+        return certificateDTOList;
+    }
+
+    public Certificate readCertificateBySerialNumber(String keyStoreFile, String keyStorePass, String serialNumber) {
+        try {
+            //kreiramo instancu KeyStore
+            KeyStore ks = KeyStore.getInstance("PKCS12");
+            //ucitavamo podatke
+            BufferedInputStream in = new BufferedInputStream(new FileInputStream(keyStoreFile));
+            ks.load(in, keyStorePass.toCharArray());
+            Enumeration<String> aliases = ks.aliases();
+            while(aliases.hasMoreElements()) {
+                String entry = aliases.nextElement();
+                System.out.println(entry);
+                X509Certificate cert = (X509Certificate) ks.getCertificate(entry);
+                System.out.println(cert.getSerialNumber());
+                System.out.println(serialNumber);
+                if(cert.getSerialNumber().toString().equals(serialNumber)) {
+                    System.out.println("usao");
+                    return ks.getCertificate(entry);
+                }
+            }
+        } catch (KeyStoreException e) {
+            e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public PrivateKey getPrivateKey(String filePath, String alias, String password) {
+        try {
+            BufferedInputStream in = new BufferedInputStream(new FileInputStream(filePath));
+            keyStore.load(in, password.toCharArray());
+            if(keyStore.isKeyEntry(alias)) {
+                return (PrivateKey) keyStore.getKey(alias, password.toCharArray());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+//
+//    KeyUsage ::= BIT STRING {
+//                digitalSignature        (0),
+//                nonRepudiation          (1),
+//                keyEncipherment         (2),
+//                dataEncipherment        (3),
+//                keyAgreement            (4),
+//                keyCertSign             (5),  --> true ONLY for CAs
+//                cRLSign                 (6),
+//                encipherOnly            (7),
+//                decipherOnly            (8) }
 }
