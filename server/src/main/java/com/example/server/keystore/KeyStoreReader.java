@@ -19,6 +19,7 @@ import java.security.cert.*;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.Iterator;
 
 
 public class KeyStoreReader {
@@ -218,4 +219,32 @@ public class KeyStoreReader {
 //                cRLSign                 (6),
 //                encipherOnly            (7),
 //                decipherOnly            (8) }
+    public ArrayList<Certificate> readAllCertificates(String filePath, String password) {
+    try {
+        BufferedInputStream in = new BufferedInputStream(new FileInputStream(filePath));
+        keyStore.load(in, password.toCharArray());
+        Iterator<String> s =keyStore.aliases().asIterator();
+        ArrayList<Certificate> ret= new ArrayList<>();
+        while(s.hasNext()) {
+            String alias = s.next();
+            if(keyStore.isKeyEntry(alias)) {
+                Certificate cert = keyStore.getCertificate(alias);
+                ret.add(cert);
+            }
+        }
+        return ret;
+
+    } catch (KeyStoreException e) {
+        e.printStackTrace();
+    } catch (FileNotFoundException e) {
+        e.printStackTrace();
+    } catch (NoSuchAlgorithmException e) {
+        e.printStackTrace();
+    } catch (CertificateException e) {
+        e.printStackTrace();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+    return null;
+}
 }

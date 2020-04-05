@@ -12,7 +12,6 @@ import {
 } from "@material-ui/pickers";
 import { Grid } from "@material-ui/core";
 import DateFnsUtils from "@date-io/date-fns";
-const date = new Date();
 
 const useStyles = makeStyles((theme) => ({
   formControl: {
@@ -79,7 +78,7 @@ export default function DurationDateSelect({
               KeyboardButtonProps={{
                 "aria-label": "change date",
               }}
-              minDate={date}
+              minDate={issuer.notBefore}
               maxDate={selectedDateEnd}
               value={selectedDateFrom}
               onChange={handleDateChangeFrom}
@@ -98,7 +97,7 @@ export default function DurationDateSelect({
               KeyboardButtonProps={{
                 "aria-label": "change date",
               }}
-              minDate={date}
+              minDate={issuer.notBefore}
               value={selectedDateEnd}
               maxDate={issuer.notAfter}
               onChange={handleDateChangeEnd}

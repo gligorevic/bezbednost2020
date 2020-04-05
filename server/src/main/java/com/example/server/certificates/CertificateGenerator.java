@@ -29,7 +29,7 @@ import java.util.Date;
 import java.util.UUID;
 
 public class CertificateGenerator {
-    private static long serialNumber = 0;
+    public static long serialNumber = 0;
 
     public CertificateGenerator() {}
 

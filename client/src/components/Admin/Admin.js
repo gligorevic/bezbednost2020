@@ -81,6 +81,10 @@ export default function HorizontalLinearStepper() {
     setSelectedDateEnd(date);
   };
 
+  const changeMinDate = (date) => {
+    setSelectedDateFrom(date);
+  };
+
   const generateNewCertificate = () => {
     setState({
       commonName: "",
@@ -117,6 +121,7 @@ export default function HorizontalLinearStepper() {
             certificate={certificate}
             setCertificate={setCertificate}
             changeMaxDate={changeMaxDate}
+            changeMinDate={changeMinDate}
           />
         );
       case 2:

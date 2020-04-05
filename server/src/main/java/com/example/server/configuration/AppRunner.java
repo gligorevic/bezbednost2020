@@ -83,18 +83,21 @@ public class AppRunner implements ApplicationRunner {
         } else {
             System.out.println("Postoji");
 
-            Certificate certificate;
             try {
-                certificate = keyStoreReader.readCertificate(Constants.keystoreFilePath, Constants.password, "Security Admin");
-                X509Certificate c = (X509Certificate) certificate;
+                ArrayList<Certificate> list = keyStoreReader.readAllCertificates(Constants.keystoreFilePath, Constants.password);
+                CertificateGenerator.serialNumber = list.size();
+                for(Certificate certificate: list){
+                    X509Certificate c = (X509Certificate) certificate;
 
-                System.out.println("Issuer\n");
-                System.out.println(c.getIssuerDN().getName());
-                System.out.println("Subject\n");
-                System.out.println(c.getSubjectX500Principal().getName());
+                    System.out.println("Issuer\n");
+                    System.out.println(c.getIssuerDN().getName());
+                    System.out.println("Subject\n");
+                    System.out.println(c.getSubjectX500Principal().getName());
 
-                System.out.println(c.getNotAfter());
-                System.out.println(c.getNotBefore());
+                    System.out.println(c.getNotAfter());
+                    System.out.println(c.getNotBefore());
+                }
+
             } catch (Exception e) {
                 System.out.println("Eror se dogodio");
                 e.printStackTrace();

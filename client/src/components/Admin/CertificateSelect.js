@@ -36,6 +36,7 @@ export default function CertificateSelect({
   certificate,
   setCertificate,
   changeMaxDate,
+  changeMinDate,
 }) {
   const classes = useStyles();
 
@@ -51,6 +52,7 @@ export default function CertificateSelect({
   const handleChange = (cert) => {
     setCertificate(cert);
     changeMaxDate(cert.notAfter);
+    changeMinDate(cert.notBefore);
   };
 
   return (

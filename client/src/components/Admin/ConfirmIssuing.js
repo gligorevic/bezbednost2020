@@ -33,8 +33,9 @@ export default function ConfirmIssuing({
   selectedDateEnd,
 }) {
   const classes = useStyles();
-  const formattedDateFrom = format(selectedDateFrom, "MMMM dd, yyyy H:mma");
-  const formattedDateEnd = format(selectedDateEnd, "MMMM dd, yyyy H:mma");
+
+  const formattedDateFrom = format(selectedDateFrom, "MMMM dd, yyyy");
+  const formattedDateEnd = format(selectedDateEnd, "MMMM dd, yyyy");
   return (
     <>
       <Paper>
