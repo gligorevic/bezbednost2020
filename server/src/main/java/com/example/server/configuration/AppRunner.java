@@ -1,11 +1,13 @@
 package com.example.server.configuration;
 
 import com.example.server.certificates.CertificateGenerator;
+import com.example.server.certificates.Constants;
 import com.example.server.data.IssuerData;
 import com.example.server.data.SubjectData;
 import com.example.server.enumeration.KeyUsages;
 import com.example.server.keystore.KeyStoreReader;
 import com.example.server.keystore.KeyStoreWriter;
+import org.apache.tomcat.util.bcel.Const;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -30,9 +32,6 @@ public class AppRunner implements ApplicationRunner {
 
     private KeyStore keyStore;
 
-    private final String passString = "password";
-    private final String keystorePath = "./files/keystore.p12";
-
     private KeyStoreReader keyStoreReader = new KeyStoreReader();
     private KeyStoreWriter keyStoreWriter = new KeyStoreWriter();
 
@@ -46,14 +45,11 @@ public class AppRunner implements ApplicationRunner {
             e.printStackTrace();
         }
 
-        File f = new File("./files/keystore.p12");
+        File f = new File(Constants.keystoreFilePath);
 
         if(!f.exists()) {
             System.out.println("Ne postoji keystore");
-
-            char[] password = passString.toCharArray();
-
-            keyStoreWriter.loadKeyStore(null,password);
+            keyStoreWriter.loadKeyStore(null, Constants.password.toCharArray());
 
             try {
                 SubjectData subjectData = CertificateGenerator.generateSubjectData("Security Admin", "Tim20", "Tim20Root", "Novi Sad", "tim20@gmail.com");
@@ -63,20 +59,17 @@ public class AppRunner implements ApplicationRunner {
                 CertificateGenerator cg = new CertificateGenerator();
                 X509Certificate cert = cg.generateCertificate(subjectData, issuerData, new KeyUsages[]{KeyUsages.KEY_CERT_SIGN, KeyUsages.CRL_SIGN });
 
-                keyStoreWriter.write("Security Admin", keyPair.getPrivate(), password, (Certificate)cert);
-                keyStoreWriter.saveKeyStore(keystorePath, password);
+                keyStoreWriter.write("Security Admin", keyPair.getPrivate(), Constants.password.toCharArray(), (Certificate)cert);
+                keyStoreWriter.saveKeyStore(Constants.keystoreFilePath, Constants.password.toCharArray());
 
-                Certificate certificate = keyStoreReader.readCertificate(keystorePath, passString, "Security Admin");
+                Certificate certificate = keyStoreReader.readCertificate(Constants.keystoreFilePath, Constants.password, "Security Admin");
                 X509Certificate c = (X509Certificate) certificate;
 
                 System.out.println("Issuer\n");
                 System.out.println(c.getIssuerDN().getName());
-                System.out.println("\n\n");
-
 
                 System.out.println("Subject\n");
                 System.out.println(c.getSubjectX500Principal().getName());
-                System.out.println("\n\n");
 
                 System.out.println(c.getNotAfter());
                 System.out.println(c.getNotBefore());
@@ -89,22 +82,18 @@ public class AppRunner implements ApplicationRunner {
 
             Certificate certificate;
             try {
-                certificate = keyStoreReader.readCertificate(keystorePath, passString, "tim20root");
+                certificate = keyStoreReader.readCertificate(Constants.keystoreFilePath, Constants.password, "Security Admin");
                 X509Certificate c = (X509Certificate) certificate;
 
                 System.out.println("Issuer\n");
                 System.out.println(c.getIssuerDN().getName());
-                System.out.println("\n\n");
-
-
                 System.out.println("Subject\n");
                 System.out.println(c.getSubjectX500Principal().getName());
-                System.out.println("\n\n");
 
                 System.out.println(c.getNotAfter());
                 System.out.println(c.getNotBefore());
             } catch (Exception e) {
-                System.out.println("Eror se desio");
+                System.out.println("Eror se dogodio");
                 e.printStackTrace();
             }
 

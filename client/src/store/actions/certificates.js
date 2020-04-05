@@ -13,7 +13,6 @@ export const getAllKeyUsages = () => async (dispatch, getState) => {
       state.certificates.keyUsages &&
       state.certificates.keyUsages.length > 0
     ) {
-      console.log("Vec postoje");
     } else {
       const keyUsages = await axios.get("/api/admin/getAllKeyUsages");
       dispatch(setKeyUsages(keyUsages.data));

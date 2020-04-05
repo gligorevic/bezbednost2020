@@ -54,11 +54,9 @@ public class CertificateGenerator {
                     subjectData.getPublicKey());
             //Generise se sertifikat
             try {
-                for(KeyUsages key : keyUsages) {
-                    System.out.println(key);
-                    System.out.println(getKeyUsage(key));
-                    certGen.addExtension(Extension.keyUsage, false, getKeyUsage(key));
-                }
+
+                    certGen.addExtension(Extension.keyUsage, false, getKeyUsage(keyUsages));
+
             }catch(Exception e) {
                 e.printStackTrace();
             }
@@ -86,29 +84,42 @@ public class CertificateGenerator {
         return null;
     }
 
-    private KeyUsage getKeyUsage(KeyUsages key) throws Exception {
-        switch(key) {
-            case CRL_SIGN:
-                return new KeyUsage(KeyUsage.cRLSign);
-            case DATA_ENCIPHERMENT:
-                return new KeyUsage(KeyUsage.dataEncipherment);
-            case DECIPHER_ONLY:
-                return new KeyUsage(KeyUsage.decipherOnly);
-            case DIGITAL_SIGNATURE:
-                return new KeyUsage(KeyUsage.digitalSignature);
-            case ENCIPHER_ONLY:
-                return new KeyUsage(KeyUsage.encipherOnly);
-            case KEY_AGREEMENT:
-                return new KeyUsage(KeyUsage.keyAgreement);
-            case KEY_CERT_SIGN:
-                return new KeyUsage(KeyUsage.keyCertSign);
-            case KEY_ENCIPHERMENT:
-                return new KeyUsage(KeyUsage.keyEncipherment);
-            case NON_REPUDIATION:
-                return new KeyUsage(KeyUsage.nonRepudiation);
-            default:
-                throw new Exception("Bad key ussage");
+    private KeyUsage getKeyUsage(KeyUsages[] keyUsages) throws Exception {
+        int keyValue = 0;
+        for(KeyUsages key : keyUsages) {
+            switch(key) {
+                case CRL_SIGN:
+                    keyValue = KeyUsage.cRLSign | keyValue;
+                    break;
+                case DATA_ENCIPHERMENT:
+                    keyValue = KeyUsage.dataEncipherment | keyValue;
+                    break;
+                case DECIPHER_ONLY:
+                    keyValue = KeyUsage.decipherOnly | keyValue;
+                    break;
+                case DIGITAL_SIGNATURE:
+                    keyValue = KeyUsage.digitalSignature | keyValue;
+                    break;
+                case ENCIPHER_ONLY:
+                    keyValue = KeyUsage.encipherOnly | keyValue;
+                    break;
+                case KEY_AGREEMENT:
+                    keyValue = KeyUsage.keyAgreement | keyValue;
+                    break;
+                case KEY_CERT_SIGN:
+                    keyValue = KeyUsage.keyCertSign | keyValue;
+                    break;
+                case KEY_ENCIPHERMENT:
+                    keyValue = KeyUsage.keyEncipherment | keyValue;
+                    break;
+                case NON_REPUDIATION:
+                    keyValue = KeyUsage.nonRepudiation | keyValue;
+                    break;
+                default:
+                    throw new Exception("Bad key ussage");
+            }
         }
+        return new KeyUsage(keyValue);
     }
 
     public static IssuerData generateIssuerData(String CN, String O, String OU, String C, String E, PrivateKey issuerKey) {

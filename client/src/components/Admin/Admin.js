@@ -7,9 +7,12 @@ import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 import Container from "@material-ui/core/Container";
 import CertificateSelect from "./CertificateSelect";
-
+import ConfirmIssuing from "./ConfirmIssuing";
 import AdminKeyUsageForm from "./AdminCertificateForm";
 import Axios from "axios";
+import GenerateNewCertificateDialog from "./GenerateNewCertificateDialog";
+import Backdrop from "@material-ui/core/Backdrop";
+import CircularProgress from "@material-ui/core/CircularProgress";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -26,6 +29,10 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+  },
+  backdrop: {
+    zIndex: theme.zIndex.drawer + 1,
+    color: "#fff",
   },
 }));
 
@@ -48,8 +55,11 @@ export default function HorizontalLinearStepper() {
     country: "",
     mail: "",
   });
+  const [loading, setLoading] = useState(false);
 
   const [certificate, setCertificate] = React.useState("");
+
+  const [generated, setGenerated] = React.useState(false);
 
   const classes = useStyles();
   const [activeStep, setActiveStep] = React.useState(0);
@@ -61,6 +71,22 @@ export default function HorizontalLinearStepper() {
 
   const handleBack = () => {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
+  };
+
+  const generateNewCertificate = () => {
+    setState({
+      commonName: "",
+      organization: "",
+      organizationalUnit: "",
+      city: "",
+      countryOfState: "",
+      country: "",
+      mail: "",
+    });
+    setCertificate("");
+    setActiveStep(0);
+    setUsage([]);
+    setGenerated(false);
   };
 
   function getStepContent(step) {
@@ -83,23 +109,29 @@ export default function HorizontalLinearStepper() {
           />
         );
       case 2:
-        return "This is the bit I really care about!";
+        return (
+          <ConfirmIssuing
+            certificate={state}
+            issuer={certificate}
+            usages={usages}
+          />
+        );
       default:
         return "Unknown step";
     }
   }
 
   const handleSubmit = async (e) => {
-    console.log({
-      ...state,
-      issuer: certificate.serialNumber,
-      keyUsages: usages,
-    });
+    setLoading(true);
     const resp = await Axios.post("/api/admin/createCertificate", {
       ...state,
       issuer: certificate.serialNumber,
       keyUsages: usages,
     });
+    setLoading(false);
+    if (resp.status === 201) {
+      setGenerated(true);
+    }
   };
 
   return (
@@ -116,7 +148,7 @@ export default function HorizontalLinearStepper() {
           );
         })}
       </Stepper>
-      <div>
+      <div style={{ marginBottom: 130 }}>
         {activeStep < steps.length && (
           <div>
             <Typography className={classes.instructions} component="div">
@@ -155,6 +187,17 @@ export default function HorizontalLinearStepper() {
           </div>
         )}
       </div>
+      {generated && (
+        <GenerateNewCertificateDialog
+          open={generated}
+          setOpen={setGenerated}
+          generateNew={generateNewCertificate}
+        />
+      )}
+
+      <Backdrop className={classes.backdrop} open={loading}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </Container>
   );
 }

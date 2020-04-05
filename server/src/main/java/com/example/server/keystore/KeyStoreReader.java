@@ -176,12 +176,8 @@ public class KeyStoreReader {
             Enumeration<String> aliases = ks.aliases();
             while(aliases.hasMoreElements()) {
                 String entry = aliases.nextElement();
-                System.out.println(entry);
                 X509Certificate cert = (X509Certificate) ks.getCertificate(entry);
-                System.out.println(cert.getSerialNumber());
-                System.out.println(serialNumber);
                 if(cert.getSerialNumber().toString().equals(serialNumber)) {
-                    System.out.println("usao");
                     return ks.getCertificate(entry);
                 }
             }

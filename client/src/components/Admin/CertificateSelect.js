@@ -10,6 +10,7 @@ import ListItem from "@material-ui/core/ListItem";
 import Divider from "@material-ui/core/Divider";
 import ListItemText from "@material-ui/core/ListItemText";
 import Typography from "@material-ui/core/Typography";
+import DescriptionIcon from "@material-ui/icons/Description";
 
 const useStyles = makeStyles((theme) => ({
   formControl: {
@@ -42,7 +43,6 @@ export default function CertificateSelect({
   useEffect(() => {
     (async () => {
       const resp = await axios.get("/api/admin/getAllIssuerCerts");
-      console.log(resp.data);
       setIssuerCerts(resp.data);
     })();
   }, []);
@@ -57,11 +57,8 @@ export default function CertificateSelect({
       <div>
         <Grid container spacing={3}>
           <Grid item xs={9}>
-            <Paper
-              className={classes.paper}
-              style={{ height: certificate === "" && 500 }}
-            >
-              {certificate != "" && (
+            <Paper style={{ height: certificate === "" && 477 }}>
+              {certificate != "" ? (
                 <>
                   <h2
                     className={classes.textCenter}
@@ -148,6 +145,37 @@ export default function CertificateSelect({
                     </ListItem>
                   </List>
                 </>
+              ) : (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexDirection: "column",
+                    height: "100%",
+                  }}
+                >
+                  <DescriptionIcon
+                    style={{
+                      fontSize: 105,
+                      color: "#e1e1d1",
+                      // position: "relative",
+                      // top: "50%",
+                      // left: "50%",
+                      // transform: "translate(-50%, -80%)",
+                      display: "inline-block",
+                    }}
+                  />
+                  <p
+                    style={{
+                      textAlign: "center",
+                      color: "#c1c1c1",
+                      // position: "relative",
+                    }}
+                  >
+                    Select Certificate
+                  </p>
+                </div>
               )}
             </Paper>
           </Grid>
