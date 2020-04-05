@@ -1,6 +1,7 @@
 package com.example.server.dto;
 
 import java.math.BigInteger;
+import java.util.Date;
 
 public class CertificateExchangeDTO {
     private String name;
@@ -8,13 +9,17 @@ public class CertificateExchangeDTO {
     private String organization;
     private String email;
     private String issuerName;
+    private Date notBefore;
+    private Date notAfter;
 
-    public CertificateExchangeDTO(String name, String organization, String email, String issuerName, BigInteger serialNumber) {
+    public CertificateExchangeDTO(String name, String organization, String email, String issuerName, BigInteger serialNumber, Date notBefore, Date notAfter) {
         this.name = name;
         this.serialNumber = serialNumber;
         this.organization = organization;
         this.email = email;
         this.issuerName = issuerName;
+        this.notBefore = notBefore;
+        this.notAfter = notAfter;
     }
 
 
@@ -56,5 +61,21 @@ public class CertificateExchangeDTO {
 
     public void setIssuerName(String issuerName) {
         this.issuerName = issuerName;
+    }
+
+    public Date getNotBefore() {
+        return notBefore;
+    }
+
+    public void setNotBefore(Date notBefore) {
+        this.notBefore = notBefore;
+    }
+
+    public Date getNotAfter() {
+        return notAfter;
+    }
+
+    public void setNotAfter(Date notAfter) {
+        this.notAfter = notAfter;
     }
 }

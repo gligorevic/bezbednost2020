@@ -13,6 +13,7 @@ import Axios from "axios";
 import GenerateNewCertificateDialog from "./GenerateNewCertificateDialog";
 import Backdrop from "@material-ui/core/Backdrop";
 import CircularProgress from "@material-ui/core/CircularProgress";
+import DurationDateSelect from "./DurationDateSelect";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -40,10 +41,11 @@ function getSteps() {
   return [
     "Podaci o sertifikatu",
     "Sertifikat koji potpisuje",
+    "Vreme trajanja sertifikata",
     "Kreiraj sertifikat",
   ];
 }
-
+const date = new Date();
 export default function HorizontalLinearStepper() {
   const [usages, setUsage] = React.useState([]);
   const [state, setState] = useState({
@@ -73,6 +75,12 @@ export default function HorizontalLinearStepper() {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
 
+  const [selectedDateFrom, setSelectedDateFrom] = React.useState(date);
+  const [selectedDateEnd, setSelectedDateEnd] = React.useState(date);
+  const changeMaxDate = (date) => {
+    setSelectedDateEnd(date);
+  };
+
   const generateNewCertificate = () => {
     setState({
       commonName: "",
@@ -82,6 +90,8 @@ export default function HorizontalLinearStepper() {
       countryOfState: "",
       country: "",
       mail: "",
+      notBefore: "",
+      notAfter: "",
     });
     setCertificate("");
     setActiveStep(0);
@@ -106,14 +116,28 @@ export default function HorizontalLinearStepper() {
             usages={usages}
             certificate={certificate}
             setCertificate={setCertificate}
+            changeMaxDate={changeMaxDate}
           />
         );
       case 2:
+        return (
+          <DurationDateSelect
+            certificate={state}
+            issuer={certificate}
+            selectedDateEnd={selectedDateEnd}
+            selectedDateFrom={selectedDateFrom}
+            setSelectedDateEnd={setSelectedDateEnd}
+            setSelectedDateFrom={setSelectedDateFrom}
+          />
+        );
+      case 3:
         return (
           <ConfirmIssuing
             certificate={state}
             issuer={certificate}
             usages={usages}
+            selectedDateEnd={selectedDateEnd}
+            selectedDateFrom={selectedDateFrom}
           />
         );
       default:
@@ -123,6 +147,8 @@ export default function HorizontalLinearStepper() {
 
   const handleSubmit = async (e) => {
     setLoading(true);
+    state.notAfter = selectedDateEnd;
+    state.notBefore = selectedDateFrom;
     const resp = await Axios.post("/api/admin/createCertificate", {
       ...state,
       issuer: certificate.serialNumber,

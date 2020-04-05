@@ -35,6 +35,7 @@ export default function CertificateSelect({
   usages,
   certificate,
   setCertificate,
+  changeMaxDate,
 }) {
   const classes = useStyles();
 
@@ -49,6 +50,7 @@ export default function CertificateSelect({
 
   const handleChange = (cert) => {
     setCertificate(cert);
+    changeMaxDate(cert.notAfter);
   };
 
   return (
@@ -58,7 +60,7 @@ export default function CertificateSelect({
         <Grid container spacing={3}>
           <Grid item xs={9}>
             <Paper style={{ height: certificate === "" && 477 }}>
-              {certificate != "" ? (
+              {certificate !== "" ? (
                 <>
                   <h2
                     className={classes.textCenter}
@@ -185,7 +187,7 @@ export default function CertificateSelect({
                 {issuerCerts.map((cert) => {
                   return (
                     <MenuItem
-                      selected={certificate.serialNumber == cert.serialNumber}
+                      selected={certificate.serialNumber === cert.serialNumber}
                       key={cert.serialNumber}
                       onClick={() => handleChange(cert)}
                     >

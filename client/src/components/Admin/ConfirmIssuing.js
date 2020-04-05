@@ -7,6 +7,7 @@ import ListItemText from "@material-ui/core/ListItemText";
 import Typography from "@material-ui/core/Typography";
 import Paper from "@material-ui/core/Paper";
 import Chip from "@material-ui/core/Chip";
+import { format } from "date-fns";
 
 const useStyles = makeStyles((theme) => ({
   formControl: {
@@ -24,9 +25,16 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function ConfirmIssuing({ certificate, issuer, usages }) {
+export default function ConfirmIssuing({
+  certificate,
+  issuer,
+  usages,
+  selectedDateFrom,
+  selectedDateEnd,
+}) {
   const classes = useStyles();
-
+  const formattedDateFrom = format(selectedDateFrom, "MMMM dd, yyyy H:mma");
+  const formattedDateEnd = format(selectedDateEnd, "MMMM dd, yyyy H:mma");
   return (
     <>
       <Paper>
@@ -81,7 +89,7 @@ export default function ConfirmIssuing({ certificate, issuer, usages }) {
           <Divider component="li" />
           <ListItem alignItems="flex-start">
             <ListItemText
-              primary="Email:"
+              primary="City:"
               secondary={
                 <Typography
                   component="span"
@@ -120,6 +128,36 @@ export default function ConfirmIssuing({ certificate, issuer, usages }) {
                   color="textPrimary"
                 >
                   {certificate.country}
+                </Typography>
+              }
+            />
+          </ListItem>
+          <ListItem alignItems="flex-start">
+            <ListItemText
+              primary="Valid from:"
+              secondary={
+                <Typography
+                  component="span"
+                  variant="body2"
+                  className={classes.inline}
+                  color="textPrimary"
+                >
+                  {formattedDateFrom}
+                </Typography>
+              }
+            />
+          </ListItem>
+          <ListItem alignItems="flex-start">
+            <ListItemText
+              primary="To:"
+              secondary={
+                <Typography
+                  component="span"
+                  variant="body2"
+                  className={classes.inline}
+                  color="textPrimary"
+                >
+                  {formattedDateEnd}
                 </Typography>
               }
             />

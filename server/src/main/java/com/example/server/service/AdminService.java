@@ -30,7 +30,7 @@ public class AdminService {
         try {
             keyStoreWriter.loadKeyStore(Constants.keystoreFilePath, Constants.password.toCharArray());
 
-            SubjectData subjectData = CertificateGenerator.generateSubjectData(certificateDTO.getCommonName(),certificateDTO.getOrganization(), certificateDTO.getOrganizationalUnit(), certificateDTO.getCity(), certificateDTO.getMail());
+            SubjectData subjectData = CertificateGenerator.generateSubjectData(certificateDTO.getCommonName(),certificateDTO.getOrganization(), certificateDTO.getOrganizationalUnit(), certificateDTO.getCity(), certificateDTO.getMail(), certificateDTO.getNotBefore(), certificateDTO.getNotAfter());
             KeyPair keyPair = CertificateGenerator.generateKeyPair();
 
             X509Certificate issuerCert = (X509Certificate) keyStoreReader.readCertificateBySerialNumber(Constants.keystoreFilePath, Constants.password, certificateDTO.getIssuer());

@@ -2,6 +2,8 @@ package com.example.server.dto;
 
 import com.example.server.enumeration.KeyUsages;
 
+import java.util.Date;
+
 public class CertificateDTO {
    private KeyUsages[] keyUsages;
 
@@ -21,11 +23,15 @@ public class CertificateDTO {
 
    private String issuer;
 
+   private Date notBefore;
+
+   private Date notAfter;
+
    public CertificateDTO() {
 
    }
 
-   public CertificateDTO(String commonName, String organization, String organizationalUnit, String city, String countyOfState, String country, String mail, String issuer) {
+   public CertificateDTO(String commonName, String organization, String organizationalUnit, String city, String countyOfState, String country, String mail, String issuer, Date notBefore, Date notAfter) {
       this.commonName = commonName;
       this.organization = organization;
       this.organizationalUnit = organizationalUnit;
@@ -34,6 +40,8 @@ public class CertificateDTO {
       this.country = country;
       this.mail = mail;
       this.issuer = issuer;
+      this.notBefore = notBefore;
+      this.notAfter = notAfter;
    }
 
    public void setKeyUsages(KeyUsages[] keyUsages) {
@@ -106,5 +114,21 @@ public class CertificateDTO {
 
    public String getIssuer() {
       return issuer;
+   }
+
+   public Date getNotBefore() {
+      return notBefore;
+   }
+
+   public void setNotBefore(Date notBefore) {
+      this.notBefore = notBefore;
+   }
+
+   public Date getNotAfter() {
+      return notAfter;
+   }
+
+   public void setNotAfter(Date notAfter) {
+      this.notAfter = notAfter;
    }
 }

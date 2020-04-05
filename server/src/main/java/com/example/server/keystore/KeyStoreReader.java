@@ -160,7 +160,7 @@ public class KeyStoreReader {
 
                 X500Name x500nameIssuer = new JcaX509CertificateHolder(cert).getIssuer();
                 RDN cnIssuer = x500nameIssuer.getRDNs(BCStyle.CN)[0];
-                certificateDTOList.add(new CertificateExchangeDTO(IETFUtils.valueToString(cn.getFirst().getValue()), IETFUtils.valueToString(org.getFirst().getValue()), IETFUtils.valueToString(email.getFirst().getValue()), IETFUtils.valueToString(cnIssuer.getFirst().getValue()), cert.getSerialNumber()));
+                certificateDTOList.add(new CertificateExchangeDTO(IETFUtils.valueToString(cn.getFirst().getValue()), IETFUtils.valueToString(org.getFirst().getValue()), IETFUtils.valueToString(email.getFirst().getValue()), IETFUtils.valueToString(cnIssuer.getFirst().getValue()), cert.getSerialNumber(), cert.getNotBefore(), cert.getNotAfter()));
             }
         }
         return certificateDTOList;

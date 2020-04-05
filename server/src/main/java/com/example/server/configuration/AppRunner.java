@@ -52,7 +52,10 @@ public class AppRunner implements ApplicationRunner {
             keyStoreWriter.loadKeyStore(null, Constants.password.toCharArray());
 
             try {
-                SubjectData subjectData = CertificateGenerator.generateSubjectData("Security Admin", "Tim20", "Tim20Root", "Novi Sad", "tim20@gmail.com");
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTime(new Date());
+                calendar.add(Calendar.MONTH, 2);
+                SubjectData subjectData = CertificateGenerator.generateSubjectData("Security Admin", "Tim20", "Tim20Root", "Novi Sad", "tim20@gmail.com", new Date(), calendar.getTime());
                 KeyPair keyPair = CertificateGenerator.generateKeyPair();
                 IssuerData issuerData = CertificateGenerator.generateIssuerData("Security Admin", "Tim20", "Tim20Root", "Novi Sad", "tim20@gmail.com",keyPair.getPrivate());
 

@@ -138,17 +138,14 @@ public class CertificateGenerator {
         return new IssuerData(issuerKey, builder.build());
     }
 
-    public static SubjectData generateSubjectData(String CN, String O, String OU, String C, String E) {
+    public static SubjectData generateSubjectData(String CN, String O, String OU, String C, String E, Date notBefore, Date notAfter) {
         try {
             KeyPair keyPairSubject = generateKeyPair();
 
             //Datumi od kad do kad vazi sertifikat
-            Calendar c = Calendar.getInstance();
-            c.setTime(new Date());
-            c.add(Calendar.YEAR, 20);
             SimpleDateFormat iso8601Formater = new SimpleDateFormat("yyyy-MM-dd");
-            Date startDate = iso8601Formater.parse(iso8601Formater.format(new Date()));
-            Date endDate = iso8601Formater.parse(iso8601Formater.format(c.getTime()));
+            Date startDate = iso8601Formater.parse(iso8601Formater.format(notBefore));
+            Date endDate = iso8601Formater.parse(iso8601Formater.format(notAfter));
 
             //klasa X500NameBuilder pravi X500Name objekat koji predstavlja podatke o vlasniku
             X500NameBuilder builder = new X500NameBuilder(BCStyle.INSTANCE);
