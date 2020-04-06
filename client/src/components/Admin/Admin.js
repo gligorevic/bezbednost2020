@@ -39,10 +39,10 @@ const useStyles = makeStyles((theme) => ({
 
 function getSteps() {
   return [
-    "Podaci o sertifikatu",
-    "Sertifikat koji potpisuje",
-    "Vreme trajanja sertifikata",
-    "Kreiraj sertifikat",
+    "Certificate data",
+    "Selection of issuer",
+    "Duration of validity",
+    "Create certificate",
   ];
 }
 const date = new Date();

@@ -43,7 +43,10 @@ public class AdminService {
             RDN city = x500name.getRDNs(BCStyle.C)[0];
 
             IssuerData issuerData = CertificateGenerator.generateIssuerData(rdnToString(cn), rdnToString(org),rdnToString(ou),rdnToString(city),rdnToString(email), keyStoreReader.getPrivateKey(Constants.keystoreFilePath, rdnToString(cn), Constants.password));
-
+            //provera da li se vreme validnosti sertifikata nalazi u okviru vremena validnosti issuer-a
+            if(certificateDTO.getNotAfter().after(issuerCert.getNotAfter()) || certificateDTO.getNotBefore().before(issuerCert.getNotBefore())){
+                return null;
+            }
             CertificateGenerator cg = new CertificateGenerator();
             X509Certificate cert = cg.generateCertificate(subjectData, issuerData, certificateDTO.getKeyUsages());
 
@@ -75,6 +78,15 @@ public class AdminService {
         try {
             return keyStoreReader.findCACerts(keyStoreReader.getKeyStore(Constants.keystoreFilePath, Constants.password));
         } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public ArrayList<CertificateExchangeDTO> getAllCerts(){
+        try{
+            return keyStoreReader.findAllCerts((keyStoreReader.getKeyStore(Constants.keystoreFilePath, Constants.password)));
+        }catch (Exception e){
             e.printStackTrace();
         }
         return null;

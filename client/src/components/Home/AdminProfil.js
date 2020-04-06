@@ -11,6 +11,8 @@ import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
 import ChevronRightIcon from "@material-ui/icons/ChevronRight";
 import IconButton from "@material-ui/core/IconButton";
 import clsx from "clsx";
+import CertificatesList from "../Admin/CertificatesList";
+import TabPanel from "../layouts/TabPanel";
 const drawerWidth = 240;
 
 const useStyles = makeStyles((theme) => ({
@@ -123,6 +125,9 @@ function ResponsiveDrawer(props) {
           })}
         >
           <div className={classes.drawerHeader} />
+          <TabPanel value={value} index={0}>
+            {value === 0 && <CertificatesList />}
+          </TabPanel>
         </main>
       </div>
     </>
