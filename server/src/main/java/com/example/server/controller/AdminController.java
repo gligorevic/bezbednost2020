@@ -39,11 +39,46 @@ public class AdminController {
 
     @RequestMapping(value="/getAllKeyUsages", method = RequestMethod.GET)
     public ResponseEntity<KeyUsages[]> getAllKeyUsages() {
-        return new ResponseEntity<>(KeyUsages.values(), HttpStatus.OK);
+        try {
+            return new ResponseEntity<>(KeyUsages.values(), HttpStatus.OK);
+        }catch (Exception e){
+            e.printStackTrace();
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
     }
 
     @RequestMapping(value="/getAllIssuerCerts", method = RequestMethod.GET)
     public ResponseEntity<ArrayList<CertificateExchangeDTO>> getAllIssuerCerts() {
-        return new ResponseEntity<>(adminService.getCACerts(), HttpStatus.OK);
+        try {
+            return new ResponseEntity<>(adminService.getCACerts(), HttpStatus.OK);
+        }catch (Exception e){
+            e.printStackTrace();
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
     }
+
+    @RequestMapping(value = "/getAllCerts", method = RequestMethod.GET)
+    public ResponseEntity<ArrayList<CertificateExchangeDTO>> getAllCerts(){
+        try{
+            return new ResponseEntity<>(adminService.getAllCerts(), HttpStatus.OK);
+        }catch (Exception e){
+            e.printStackTrace();
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+    }
+    @RequestMapping(value="/download", method = RequestMethod.PUT)
+    public ResponseEntity<CertificateExchangeDTO> downloadCertificate(@RequestBody CertificateExchangeDTO certificateExchangeDTO){
+        try{
+            CertificateExchangeDTO c = adminService.downloadCertificate(certificateExchangeDTO);
+            if(c!= null){
+                return new ResponseEntity<>(c, HttpStatus.OK);
+            }else {
+                return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+    }
+
 }

@@ -4,6 +4,7 @@ import "./App.css";
 import Admin from "./components/Admin/Admin";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import { configureStore } from "./store/index";
+import Home from "./components/Home/Home";
 
 const store = configureStore();
 
@@ -12,7 +13,7 @@ function App() {
     <Provider store={store}>
       <Router className="App">
         <Switch>
-          <Route exact path="/" render={() => <div>Home stranica</div>} />
+          <Route exact path="/" component={Home} />
           <Route exact path="/admin/issueCertificate" component={Admin} />
         </Switch>
       </Router>
