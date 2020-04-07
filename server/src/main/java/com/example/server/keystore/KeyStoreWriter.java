@@ -1,25 +1,23 @@
-package com.example.server.service;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+package com.example.server.keystore;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.security.*;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 
-@Service
-public class KeyStoreService {
+public class KeyStoreWriter {
     private KeyStore keyStore;
 
-    @Autowired
-    public KeyStoreService() {
+    public KeyStoreWriter() {
         try {
-            this.keyStore = KeyStore.getInstance("JKS", "SUN");
-        } catch(Exception e) {
+            keyStore = KeyStore.getInstance("PKCS12");
+        } catch (KeyStoreException e) {
             e.printStackTrace();
         }
     }
@@ -59,20 +57,10 @@ public class KeyStoreService {
         }
     }
 
-    //Upisujemo privatni kljuc
-    public void writeKeyEntry(String alias, PrivateKey privateKey, char[] password, java.security.cert.Certificate certificate) {
+    public void write(String alias, PrivateKey privateKey, char[] password, Certificate certificate) {
         try {
             keyStore.setKeyEntry(alias, privateKey, password, new Certificate[] {certificate});
         } catch (KeyStoreException e) {
-            e.printStackTrace();
-        }
-    }
-
-    //Upisujemo sertifikat
-    public void writeCertificateEntry(String alias, Certificate certificate) {
-        try {
-            keyStore.setCertificateEntry(alias, certificate);
-        } catch(Exception e) {
             e.printStackTrace();
         }
     }
