@@ -3,11 +3,13 @@ package com.example.server.certificates;
 import com.example.server.data.IssuerData;
 import com.example.server.data.SubjectData;
 import com.example.server.enumeration.KeyUsages;
+import org.apache.tomcat.util.codec.binary.Base64;
+import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.DERIA5String;
+import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
-import org.bouncycastle.asn1.x509.BasicConstraints;
-import org.bouncycastle.asn1.x509.Extension;
-import org.bouncycastle.asn1.x509.KeyUsage;
+import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
@@ -17,6 +19,10 @@ import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.CertificateEncodingException;
@@ -33,7 +39,7 @@ public class CertificateGenerator {
 
     public CertificateGenerator() {}
 
-    public X509Certificate generateCertificate(SubjectData subjectData, IssuerData issuerData, KeyUsages[] keyUsages) {
+    public X509Certificate generateCertificate(SubjectData subjectData, IssuerData issuerData, BigInteger issuerCSN, String aliasName, KeyUsages[] keyUsages) {
         try {
             //Posto klasa za generisanje sertifiakta ne moze da primi direktno privatni kljuc pravi se builder za objekat
             //Ovaj objekat sadrzi privatni kljuc izdavaoca sertifikata i koristiti se za potpisivanje sertifikata
@@ -57,6 +63,17 @@ public class CertificateGenerator {
 
                     certGen.addExtension(Extension.keyUsage, false, getKeyUsage(keyUsages));
 
+                    AccessDescription caIssuers = new AccessDescription(AccessDescription.id_ad_caIssuers,
+                        new GeneralName(GeneralName.uniformResourceIdentifier,
+                                new DERIA5String("http://localhost:8080/files/certificates/") + issuerCSN.toString() + ".crt"));
+
+
+                ASN1EncodableVector aia_ASN = new ASN1EncodableVector();
+                aia_ASN.add(caIssuers);
+
+                certGen.addExtension(Extension.authorityInfoAccess, false, new DERSequence(aia_ASN));
+
+
             }catch(Exception e) {
                 e.printStackTrace();
             }
@@ -67,6 +84,12 @@ public class CertificateGenerator {
             //Nakon toga je potrebno certHolder konvertovati u sertifikat, za sta se koristi certConverter
             JcaX509CertificateConverter certConverter = new JcaX509CertificateConverter();
             certConverter = certConverter.setProvider(new BouncyCastleProvider());
+
+            FileOutputStream os = new FileOutputStream(".\\files\\certificates\\" + serialNumber + ".cer");
+            os.write("-----BEGIN CERTIFICATE-----\n".getBytes("US-ASCII"));
+            os.write(Base64.encodeBase64(certConverter.getCertificate(certHolder).getEncoded(), true));
+            os.write("-----END CERTIFICATE-----\n".getBytes("US-ASCII"));
+            os.close();
 
             //Konvertuje objekat u sertifikat
             return certConverter.getCertificate(certHolder);
@@ -79,6 +102,12 @@ public class CertificateGenerator {
         } catch (OperatorCreationException e) {
             e.printStackTrace();
         } catch (CertificateException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
         return null;

@@ -22,6 +22,10 @@ public class KeyStoreWriter {
         }
     }
 
+    public KeyStore getKeystore(){
+        return keyStore;
+    }
+
     public void loadKeyStore(String fileName, char[] password) {
         try {
             if(fileName != null) {
@@ -59,7 +63,8 @@ public class KeyStoreWriter {
 
     public void write(String alias, PrivateKey privateKey, char[] password, Certificate certificate) {
         try {
-            keyStore.setKeyEntry(alias, privateKey, password, new Certificate[] {certificate});
+            keyStore.setKeyEntry(alias, privateKey, password, new Certificate[]{certificate});
+
         } catch (KeyStoreException e) {
             e.printStackTrace();
         }

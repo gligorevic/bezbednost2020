@@ -7,16 +7,19 @@ import com.example.server.data.SubjectData;
 import com.example.server.enumeration.KeyUsages;
 import com.example.server.keystore.KeyStoreReader;
 import com.example.server.keystore.KeyStoreWriter;
+import com.example.server.service.CertificateService;
 import org.apache.tomcat.util.bcel.Const;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -29,6 +32,9 @@ import java.util.Date;
 
 @Component
 public class AppRunner implements ApplicationRunner {
+
+    @Autowired
+    private CertificateService certificateService;
 
     private KeyStore keyStore;
 
@@ -60,13 +66,15 @@ public class AppRunner implements ApplicationRunner {
                 IssuerData issuerData = CertificateGenerator.generateIssuerData("Security Admin", "Tim20", "Tim20Root", "Novi Sad", "tim20@gmail.com",keyPair.getPrivate());
 
                 CertificateGenerator cg = new CertificateGenerator();
-                X509Certificate cert = cg.generateCertificate(subjectData, issuerData, new KeyUsages[]{KeyUsages.KEY_CERT_SIGN, KeyUsages.CRL_SIGN });
+                X509Certificate cert = cg.generateCertificate(subjectData, issuerData, BigInteger.ONE, "Security Admin", new KeyUsages[]{KeyUsages.KEY_CERT_SIGN, KeyUsages.CRL_SIGN });
 
-                keyStoreWriter.write("Security Admin", keyPair.getPrivate(), Constants.password.toCharArray(), (Certificate)cert);
+                keyStoreWriter.write("Security Admin", keyPair.getPrivate(), Constants.password.toCharArray(), cert);
                 keyStoreWriter.saveKeyStore(Constants.keystoreFilePath, Constants.password.toCharArray());
 
                 Certificate certificate = keyStoreReader.readCertificate(Constants.keystoreFilePath, Constants.password, "Security Admin");
                 X509Certificate c = (X509Certificate) certificate;
+
+                certificateService.addCertificate("0", "Security Admin", "Security Admin");
 
                 System.out.println("Issuer\n");
                 System.out.println(c.getIssuerDN().getName());
@@ -88,6 +96,8 @@ public class AppRunner implements ApplicationRunner {
                 CertificateGenerator.serialNumber = list.size();
                 for(Certificate certificate: list){
                     X509Certificate c = (X509Certificate) certificate;
+
+                    certificateService.addCertificate(c);
 
                     System.out.println("Issuer\n");
                     System.out.println(c.getIssuerDN().getName());
