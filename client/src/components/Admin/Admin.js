@@ -45,7 +45,7 @@ function getSteps() {
     "Create certificate",
   ];
 }
-const date = new Date();
+
 export default function HorizontalLinearStepper() {
   const [usages, setUsage] = React.useState([]);
   const [state, setState] = useState({
@@ -75,8 +75,9 @@ export default function HorizontalLinearStepper() {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
 
-  const [selectedDateFrom, setSelectedDateFrom] = React.useState(date);
-  const [selectedDateEnd, setSelectedDateEnd] = React.useState(date);
+  const [selectedDateFrom, setSelectedDateFrom] = React.useState(new Date());
+  const [selectedDateEnd, setSelectedDateEnd] = React.useState(new Date());
+
   const changeMaxDate = (date) => {
     setSelectedDateEnd(date);
   };

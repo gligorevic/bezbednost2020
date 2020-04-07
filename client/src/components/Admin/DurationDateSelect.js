@@ -27,6 +27,9 @@ const useStyles = makeStyles((theme) => ({
   inline: {
     display: "inline",
   },
+  paper: {
+    padding: 35,
+  },
 }));
 
 export default function DurationDateSelect({
@@ -48,28 +51,24 @@ export default function DurationDateSelect({
   };
 
   return (
-    <Paper>
-      <List>
-        <h3 style={{ textAlign: "center" }}>Select duration of certificate</h3>
-        <ListItem alignItems="flex-start">
-          <ListItemText
-            primary="Common Name:"
-            secondary={
-              <Typography
-                component="span"
-                variant="body2"
-                className={classes.inline}
-                color="textPrimary"
-              >
-                {certificate.commonName}
-              </Typography>
-            }
-          />
-        </ListItem>
+    <Paper className={classes.paper}>
+      <Grid container>
+        <Grid style={{ textAlign: "center" }} item sm={12} lg={3}>
+          <h3>Select duration of certificate</h3>
 
-        <Divider component="li" />
-        <h3 style={{ textAlign: "center" }}>Select start date</h3>
-        <Grid item sm={12} md={6} lg={3}>
+          <Typography
+            component="span"
+            variant="body2"
+            className={classes.inline}
+            color="textPrimary"
+          >
+            Common Name: <em>{certificate.commonName}</em>
+          </Typography>
+          <Divider />
+        </Grid>
+
+        <Grid style={{ textAlign: "center" }} item sm={12} md={6} lg={3}>
+          <h3>Select start date</h3>
           <MuiPickersUtilsProvider utils={DateFnsUtils} id="fromDate">
             <KeyboardDatePicker
               id="date-picker-dialog"
@@ -86,9 +85,8 @@ export default function DurationDateSelect({
           </MuiPickersUtilsProvider>
         </Grid>
 
-        <Divider component="li" />
-        <h3 style={{ textAlign: "center" }}>Select end date</h3>
-        <Grid item sm={12} md={6} lg={3}>
+        <Grid style={{ textAlign: "center" }} item sm={12} md={6} lg={3}>
+          <h3>Select end date</h3>
           <MuiPickersUtilsProvider utils={DateFnsUtils} id="endDate">
             <KeyboardDatePicker
               id="date-picker-dialog2"
@@ -104,7 +102,7 @@ export default function DurationDateSelect({
             />
           </MuiPickersUtilsProvider>
         </Grid>
-      </List>
+      </Grid>
     </Paper>
   );
 }

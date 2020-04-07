@@ -223,10 +223,10 @@ public class KeyStoreReader {
         try {
             BufferedInputStream in = new BufferedInputStream(new FileInputStream(filePath));
             keyStore.load(in, password.toCharArray());
-            Iterator<String> s = keyStore.aliases().asIterator();
+            Enumeration<String> aliases = keyStore.aliases();
             ArrayList<Certificate> ret = new ArrayList<>();
-            while (s.hasNext()) {
-                String alias = s.next();
+            while (aliases.hasMoreElements()) {
+                String alias = aliases.nextElement();
                 if (keyStore.isKeyEntry(alias)) {
                     Certificate cert = keyStore.getCertificate(alias);
                     ret.add(cert);

@@ -8,6 +8,7 @@ import Typography from "@material-ui/core/Typography";
 import Paper from "@material-ui/core/Paper";
 import Chip from "@material-ui/core/Chip";
 import { format } from "date-fns";
+import parseISO from "date-fns/parseISO";
 
 const useStyles = makeStyles((theme) => ({
   formControl: {
@@ -34,8 +35,18 @@ export default function ConfirmIssuing({
 }) {
   const classes = useStyles();
 
-  const formattedDateFrom = format(selectedDateFrom, "MMMM dd, yyyy");
-  const formattedDateEnd = format(selectedDateEnd, "MMMM dd, yyyy");
+  const formattedDateFrom = format(
+    typeof selectedDateFrom == "string"
+      ? parseISO(selectedDateFrom)
+      : selectedDateFrom,
+    "MMMM dd, yyyy"
+  );
+  const formattedDateEnd = format(
+    typeof selectedDateEnd == "string"
+      ? parseISO(selectedDateEnd)
+      : selectedDateEnd,
+    "MMMM dd, yyyy"
+  );
   return (
     <>
       <Paper>
