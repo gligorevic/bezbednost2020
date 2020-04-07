@@ -66,4 +66,19 @@ public class AdminController {
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
         }
     }
+    @RequestMapping(value="/download", method = RequestMethod.PUT)
+    public ResponseEntity<CertificateExchangeDTO> downloadCertificate(@RequestBody CertificateExchangeDTO certificateExchangeDTO){
+        try{
+            CertificateExchangeDTO c = adminService.downloadCertificate(certificateExchangeDTO);
+            if(c!= null){
+                return new ResponseEntity<>(c, HttpStatus.OK);
+            }else {
+                return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+    }
+
 }

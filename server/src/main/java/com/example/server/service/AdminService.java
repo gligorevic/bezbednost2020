@@ -8,6 +8,7 @@ import com.example.server.dto.CertificateDTO;
 import com.example.server.dto.CertificateExchangeDTO;
 import com.example.server.keystore.KeyStoreReader;
 import com.example.server.keystore.KeyStoreWriter;
+import org.apache.tomcat.util.codec.binary.Base64;
 import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
@@ -15,6 +16,7 @@ import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.springframework.stereotype.Service;
 
+import java.io.FileOutputStream;
 import java.security.KeyPair;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -87,6 +89,24 @@ public class AdminService {
         try{
             return keyStoreReader.findAllCerts((keyStoreReader.getKeyStore(Constants.keystoreFilePath, Constants.password)));
         }catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public CertificateExchangeDTO downloadCertificate(CertificateExchangeDTO certificateExchangeDTO){
+        try{
+            System.out.println(certificateExchangeDTO.getName());
+
+            Certificate certificate = keyStoreReader.readCertificate(Constants.keystoreFilePath, Constants.password, certificateExchangeDTO.getName());
+
+            String path = System.getProperty("user.home") + "/Downloads/";
+
+            FileOutputStream os = new FileOutputStream(path + certificateExchangeDTO.getName() + ".cer");
+            os.write(Base64.encodeBase64(certificate.getEncoded(), true));
+            os.close();
+            return certificateExchangeDTO;
+        }catch(Exception e){
             e.printStackTrace();
         }
         return null;

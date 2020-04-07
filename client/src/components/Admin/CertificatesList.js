@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-
+import Axios from "axios";
 import { makeStyles } from "@material-ui/core/styles";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
@@ -16,6 +16,17 @@ import { withRouter } from "react-router-dom";
 import { getAllCertificates } from "../../store/actions/certificates";
 import { Button } from "@material-ui/core";
 import moment from "moment";
+import Backdrop from "@material-ui/core/Backdrop";
+import CircularProgress from "@material-ui/core/CircularProgress";
+import Dialog from "@material-ui/core/Dialog";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogContent from "@material-ui/core/DialogContent";
+import Alert from "@material-ui/lab/Alert";
+import Slide from "@material-ui/core/Slide";
+
+const Transition = React.forwardRef(function Transition(props, ref) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -52,6 +63,10 @@ const useStyles = makeStyles((theme) => ({
   extendedIcon: {
     marginRight: theme.spacing(1),
   },
+  backdrop: {
+    zIndex: theme.zIndex.drawer + 1,
+    color: "#fff",
+  },
 }));
 
 const CertificatesList = ({ getAllCertificates, certificates, history }) => {
@@ -60,10 +75,10 @@ const CertificatesList = ({ getAllCertificates, certificates, history }) => {
     //eslint-disable-next-line
   }, []);
   const classes = useStyles();
-
+  const [loading, setLoading] = React.useState(false);
   const [order, setOrder] = React.useState("asc");
   const [orderBy, setOrderBy] = React.useState("name");
-
+  const [open, setOpen] = React.useState(false);
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
 
@@ -74,6 +89,20 @@ const CertificatesList = ({ getAllCertificates, certificates, history }) => {
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
+  };
+
+  const handleDownload = async (e, row) => {
+    setLoading(true);
+    console.log(row);
+    const resp = await Axios.put(`/api/admin/download`, row);
+    setLoading(false);
+    if (resp.status === 200) {
+      setOpen(true);
+    }
+  };
+
+  const handleClose = () => {
+    setOpen(false);
   };
 
   const sort = (certificates) => {
@@ -243,7 +272,9 @@ const CertificatesList = ({ getAllCertificates, certificates, history }) => {
                                 <Button
                                   variant="contained"
                                   color="primary"
-                                  onClick={() => {}}
+                                  onClick={(event) =>
+                                    handleDownload(event, row)
+                                  }
                                 >
                                   Download
                                 </Button>
@@ -301,6 +332,28 @@ const CertificatesList = ({ getAllCertificates, certificates, history }) => {
             />
           </Paper>
         )}
+        <Backdrop className={classes.backdrop} open={loading}>
+          <CircularProgress color="inherit" />
+        </Backdrop>
+        <Dialog
+          open={open}
+          TransitionComponent={Transition}
+          keepMounted
+          onClose={handleClose}
+          aria-labelledby="alert-dialog-slide-title"
+          aria-describedby="alert-dialog-slide-description"
+        >
+          <DialogContent>
+            <Alert severity="success">
+              Certificate has been downloaded to Downloads folder.
+            </Alert>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose} color="primary">
+              Ok
+            </Button>
+          </DialogActions>
+        </Dialog>
       </div>
     </>
   );
