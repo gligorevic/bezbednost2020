@@ -1,5 +1,7 @@
 package com.example.server.service;
 
+import com.example.server.Model.CertificateModel;
+import com.example.server.Repository.CertificateRepository;
 import com.example.server.certificates.CertificateGenerator;
 import com.example.server.certificates.Constants;
 import com.example.server.data.IssuerData;
@@ -15,25 +17,23 @@ import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
 import java.io.FileOutputStream;
 import java.security.KeyPair;
-import java.security.KeyStoreException;
 import java.security.cert.*;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 @Service
 public class AdminService {
 
     @Autowired
-    private ValidationService validationService;
+    private CertificateService certificateService;
 
     @Autowired
-    private CertificateService certificateService;
+    private CertificateRepository certificateRepository;
 
     private KeyStoreReader keyStoreReader = new KeyStoreReader();
     private KeyStoreWriter keyStoreWriter = new KeyStoreWriter();
@@ -66,8 +66,6 @@ public class AdminService {
             CertificateGenerator cg = new CertificateGenerator();
             X509Certificate cert = cg.generateCertificate(subjectData, issuerData, issuerCertSN, issuerAlias, certificateDTO.getKeyUsages());
 
-            //Certificate[] certChain = addToCertificateChain(issuerAlias, cert);
-
             keyStoreWriter.write(certificateDTO.getCommonName(), keyPair.getPrivate(), Constants.password.toCharArray(), cert);
             keyStoreWriter.saveKeyStore(Constants.keystoreFilePath, Constants.password.toCharArray());
 
@@ -83,33 +81,11 @@ public class AdminService {
             System.out.println(c.getSubjectX500Principal().getName());
             System.out.println(c.getNotAfter());
             System.out.println(c.getNotBefore());
-            System.out.println("====================================");
-            System.out.println(c);
-            System.out.println("====================================");
         } catch(Exception e) {
             e.printStackTrace();
         }
 
         return null;
-    }
-
-    private Certificate[] addToCertificateChain(String issuerAlias, X509Certificate cert) throws KeyStoreException, CertificateException {
-
-        Certificate[] certChain = keyStoreReader.getKeyStore(Constants.keystoreFilePath, Constants.password).getCertificateChain(issuerAlias);
-
-            if (!validationService.validateChain(certChain)) {
-                throw new CertificateException("Issuer's certificate is not valid");
-            }
-
-        List<Certificate> certificateList = new ArrayList<>(Arrays.asList(certChain));
-        certificateList.add(0, cert);
-
-        Certificate[] newCertificates = new Certificate[certificateList.size()];
-        for (int i = 0; i < certificateList.size(); i++)
-            newCertificates[i] = certificateList.get(i);
-
-        return newCertificates;
-
     }
 
     private String rdnToString(RDN rdn) {
@@ -118,16 +94,48 @@ public class AdminService {
 
     public ArrayList<CertificateExchangeDTO> getCACerts() {
         try {
-            return keyStoreReader.findCACerts(keyStoreReader.getKeyStore(Constants.keystoreFilePath, Constants.password));
+            ArrayList<CertificateExchangeDTO> certList = new ArrayList<>();
+
+            for(CertificateExchangeDTO cert : keyStoreReader.findCACerts(keyStoreReader.getKeyStore(Constants.keystoreFilePath, Constants.password))){
+
+                CertificateModel certificateModel = certificateRepository.findBySerialNumber(cert.getSerialNumber().toString()).get();
+
+                if(certificateService.certificateChainIsOk(certificateModel)){
+                    certList.add(cert);
+                }else{
+                    continue;
+                }
+            }
+
+            ArrayList<CertificateExchangeDTO> retList = certificateService.certificateCheckDate(certList);
+
+            return retList;
         } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
     }
 
+    @Scheduled(cron = "0 0 0 * * *")
     public ArrayList<CertificateExchangeDTO> getAllCerts(){
         try{
-            return keyStoreReader.findAllCerts((keyStoreReader.getKeyStore(Constants.keystoreFilePath, Constants.password)));
+
+            ArrayList<CertificateExchangeDTO> certList = new ArrayList<>();
+
+            for(CertificateExchangeDTO cert : keyStoreReader.findAllCerts((keyStoreReader.getKeyStore(Constants.keystoreFilePath, Constants.password)))){
+
+                CertificateModel certificateModel = certificateRepository.findBySerialNumber(cert.getSerialNumber().toString()).get();
+
+                if(certificateService.certificateChainIsOk(certificateModel)){
+                    certList.add(cert);
+                }else{
+                    continue;
+                }
+            }
+
+            ArrayList<CertificateExchangeDTO> retList = certificateService.certificateCheckDate(certList);
+
+            return retList;
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -149,6 +157,24 @@ public class AdminService {
         }catch(Exception e){
             e.printStackTrace();
         }
+        return null;
+    }
+
+    public CertificateExchangeDTO revokeCertificate(CertificateExchangeDTO certificateExchangeDTO, String reason) {
+
+        try{
+            Certificate certificate = keyStoreReader.readCertificate(Constants.keystoreFilePath, Constants.password, certificateExchangeDTO.getName());
+            X509Certificate x509Certificate = (X509Certificate) certificate;
+            CertificateModel certificateModel = certificateService.revokeCertificate(x509Certificate, reason);
+
+            if(certificateModel != null){
+                return certificateExchangeDTO;
+            }
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
         return null;
     }
 }

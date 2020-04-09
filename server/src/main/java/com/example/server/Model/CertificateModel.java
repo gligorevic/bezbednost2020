@@ -12,7 +12,7 @@ public class CertificateModel {
     @Column(name="serial_number", nullable = false, unique = true)
     private String serialNumber;
 
-    @Column(name="alias", nullable = false)
+    @Column(name="alias", nullable = false, unique = true)
     private String alias;
 
     @Column(name="active", nullable = false)

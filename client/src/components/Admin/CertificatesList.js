@@ -23,6 +23,9 @@ import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import Alert from "@material-ui/lab/Alert";
 import Slide from "@material-ui/core/Slide";
+import DialogContentText from "@material-ui/core/DialogContentText";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import TextField from "@material-ui/core/TextField";
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -79,8 +82,11 @@ const CertificatesList = ({ getAllCertificates, certificates, history }) => {
   const [order, setOrder] = React.useState("asc");
   const [orderBy, setOrderBy] = React.useState("name");
   const [open, setOpen] = React.useState(false);
+  const [openDialog, setOpenDialog] = React.useState(false);
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
+  const [revokeReason, setRevokeReason] = React.useState("");
+  const [certificateToRevoke, setCertificateToRevoke] = React.useState(null);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -101,8 +107,32 @@ const CertificatesList = ({ getAllCertificates, certificates, history }) => {
     }
   };
 
+  const handleRevocation = (e, row) => {
+    setOpenDialog(true);
+    setCertificateToRevoke(row);
+  };
+
   const handleClose = () => {
     setOpen(false);
+  };
+
+  const handleChange = (e) => {
+    setRevokeReason(e.target.value);
+  };
+
+  const handleCloseRevocation = () => {
+    setOpenDialog(false);
+  };
+
+  const handleRevoke = async () => {
+    const resp = await Axios.put(
+      `/api/admin/revokeCertificate/${revokeReason}`,
+      certificateToRevoke
+    );
+    if (resp.status === 200) {
+      setOpenDialog(false);
+      getAllCertificates();
+    }
   };
 
   const sort = (certificates) => {
@@ -283,7 +313,9 @@ const CertificatesList = ({ getAllCertificates, certificates, history }) => {
                                 <Button
                                   variant="outlined"
                                   color="secondary"
-                                  onClick={() => {}}
+                                  onClick={(event) =>
+                                    handleRevocation(event, row)
+                                  }
                                 >
                                   Revocate
                                 </Button>
@@ -351,6 +383,38 @@ const CertificatesList = ({ getAllCertificates, certificates, history }) => {
           <DialogActions>
             <Button onClick={handleClose} color="primary">
               Ok
+            </Button>
+          </DialogActions>
+        </Dialog>
+        <Dialog
+          open={openDialog}
+          onClose={handleCloseRevocation}
+          aria-labelledby="form-dialog-title"
+        >
+          <DialogTitle id="form-dialog-title">
+            Are you sure you want to revocate this certificate?
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              After you click "Agree" button certificate will be revocated
+              permanently. You need to write revocation reason.
+            </DialogContentText>
+            <TextField
+              autoFocus
+              margin="dense"
+              id="reason"
+              label="Revocation reason"
+              type="text"
+              onChange={handleChange}
+              fullWidth
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseRevocation} color="secundary">
+              Cancel
+            </Button>
+            <Button onClick={handleRevoke} color="primary">
+              Agree
             </Button>
           </DialogActions>
         </Dialog>

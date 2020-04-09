@@ -22,7 +22,6 @@ public class CertificateExchangeDTO {
         this.notAfter = notAfter;
     }
 
-
     public String getName() {
         return name;
     }

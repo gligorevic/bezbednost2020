@@ -1,5 +1,7 @@
 package com.example.server.keystore;
 
+import com.example.server.Model.CertificateModel;
+import com.example.server.Repository.CertificateRepository;
 import com.example.server.data.IssuerData;
 import com.example.server.dto.CertificateDTO;
 import com.example.server.dto.CertificateExchangeDTO;
@@ -9,6 +11,7 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
