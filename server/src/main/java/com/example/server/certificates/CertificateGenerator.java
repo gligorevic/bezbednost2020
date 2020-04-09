@@ -30,7 +30,6 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
 
@@ -92,7 +91,7 @@ public class CertificateGenerator {
             os.close();
 
             //Konvertuje objekat u sertifikat
-            return certConverter.getCertificate(certHolder);
+            return certConverter.setProvider(new BouncyCastleProvider()).getCertificate(certHolder);
         } catch (CertificateEncodingException e) {
             e.printStackTrace();
         } catch (IllegalArgumentException e) {

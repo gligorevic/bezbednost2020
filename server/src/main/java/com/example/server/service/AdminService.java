@@ -23,6 +23,8 @@ import org.springframework.stereotype.Service;
 import java.math.BigInteger;
 import java.io.FileOutputStream;
 import java.security.KeyPair;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.cert.*;
 import java.util.ArrayList;
 
@@ -66,13 +68,11 @@ public class AdminService {
             CertificateGenerator cg = new CertificateGenerator();
             X509Certificate cert = cg.generateCertificate(subjectData, issuerData, issuerCertSN, issuerAlias, certificateDTO.getKeyUsages());
 
-            keyStoreWriter.write(certificateDTO.getCommonName(), keyPair.getPrivate(), Constants.password.toCharArray(), cert);
+            keyStoreWriter.write(certificateDTO.getCommonName(), keyPair.getPrivate(), Constants.password.toCharArray(), cert, issuerCert);
             keyStoreWriter.saveKeyStore(Constants.keystoreFilePath, Constants.password.toCharArray());
 
             Certificate certificate = keyStoreReader.readCertificate(Constants.keystoreFilePath, Constants.password, certificateDTO.getCommonName());
             X509Certificate c = (X509Certificate) certificate;
-
-            certificateService.addCertificate(cert.getSerialNumber().toString(), certificateDTO.getCommonName(), rdnToString(cn));
 
             System.out.println("Issuer\n");
             System.out.println(c.getIssuerDN().getName());
@@ -94,47 +94,21 @@ public class AdminService {
 
     public ArrayList<CertificateExchangeDTO> getCACerts() {
         try {
-            ArrayList<CertificateExchangeDTO> certList = new ArrayList<>();
+            KeyStore keystore = keyStoreReader.getKeyStore(Constants.keystoreFilePath, Constants.password);
 
-            for(CertificateExchangeDTO cert : keyStoreReader.findCACerts(keyStoreReader.getKeyStore(Constants.keystoreFilePath, Constants.password))){
-
-                CertificateModel certificateModel = certificateRepository.findBySerialNumber(cert.getSerialNumber().toString()).get();
-
-                if(certificateService.certificateChainIsOk(certificateModel)){
-                    certList.add(cert);
-                }else{
-                    continue;
-                }
-            }
-
-            ArrayList<CertificateExchangeDTO> retList = certificateService.certificateCheckDate(certList);
-
-            return retList;
+            return keyStoreReader.findCACerts(keystore);
         } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
     }
 
+
+
     @Scheduled(cron = "0 0 0 * * *")
     public ArrayList<CertificateExchangeDTO> getAllCerts(){
         try{
-
-            ArrayList<CertificateExchangeDTO> certList = new ArrayList<>();
-
-            for(CertificateExchangeDTO cert : keyStoreReader.findAllCerts((keyStoreReader.getKeyStore(Constants.keystoreFilePath, Constants.password)))){
-
-                CertificateModel certificateModel = certificateRepository.findBySerialNumber(cert.getSerialNumber().toString()).get();
-
-                if(certificateService.certificateChainIsOk(certificateModel)){
-                    certList.add(cert);
-                }else{
-                    continue;
-                }
-            }
-
-            ArrayList<CertificateExchangeDTO> retList = certificateService.certificateCheckDate(certList);
-
+            ArrayList<CertificateExchangeDTO> retList = certificateService.certificateCheckDate(keyStoreReader.findAllCerts((keyStoreReader.getKeyStore(Constants.keystoreFilePath, Constants.password))));
             return retList;
         }catch (Exception e){
             e.printStackTrace();

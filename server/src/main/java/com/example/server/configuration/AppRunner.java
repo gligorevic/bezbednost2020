@@ -46,7 +46,7 @@ public class AppRunner implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception {
         try {
-            keyStore = KeyStore.getInstance("PKCS12");
+            keyStore = KeyStore.getInstance("PKCS12", new BouncyCastleProvider());
         } catch (KeyStoreException e) {
             e.printStackTrace();
         }
@@ -68,13 +68,11 @@ public class AppRunner implements ApplicationRunner {
                 CertificateGenerator cg = new CertificateGenerator();
                 X509Certificate cert = cg.generateCertificate(subjectData, issuerData, BigInteger.ZERO, "Security Admin", new KeyUsages[]{KeyUsages.KEY_CERT_SIGN, KeyUsages.CRL_SIGN });
 
-                keyStoreWriter.write("Security Admin", keyPair.getPrivate(), Constants.password.toCharArray(), cert);
+                keyStoreWriter.writeInitialRoot("Security Admin", keyPair.getPrivate(), Constants.password.toCharArray(), cert);
                 keyStoreWriter.saveKeyStore(Constants.keystoreFilePath, Constants.password.toCharArray());
 
                 Certificate certificate = keyStoreReader.readCertificate(Constants.keystoreFilePath, Constants.password, "Security Admin");
                 X509Certificate c = (X509Certificate) certificate;
-
-                certificateService.addCertificate("0", "Security Admin", "Security Admin");
 
                 System.out.println("Issuer\n");
                 System.out.println(c.getIssuerDN().getName());
@@ -96,8 +94,6 @@ public class AppRunner implements ApplicationRunner {
                 CertificateGenerator.serialNumber = list.size();
                 for(Certificate certificate: list){
                     X509Certificate c = (X509Certificate) certificate;
-
-                    certificateService.addCertificate(c);
 
                     System.out.println("Issuer\n");
                     System.out.println(c.getIssuerDN().getName());

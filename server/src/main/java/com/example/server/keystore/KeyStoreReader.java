@@ -1,17 +1,16 @@
 package com.example.server.keystore;
 
-import com.example.server.Model.CertificateModel;
 import com.example.server.Repository.CertificateRepository;
 import com.example.server.data.IssuerData;
-import com.example.server.dto.CertificateDTO;
 import com.example.server.dto.CertificateExchangeDTO;
-import com.example.server.enumeration.KeyUsages;
 import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
@@ -22,16 +21,16 @@ import java.security.cert.*;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.Iterator;
-
 
 public class KeyStoreReader {
+    @Autowired
+    private CertificateRepository certificateRepository;
 
     private KeyStore keyStore;
 
     public KeyStoreReader() {
         try {
-            keyStore = KeyStore.getInstance("PKCS12");
+            keyStore = KeyStore.getInstance("PKCS12", new BouncyCastleProvider());
         } catch (KeyStoreException e) {
             e.printStackTrace();
         }
@@ -71,7 +70,7 @@ public class KeyStoreReader {
     public Certificate readCertificate(String keyStoreFile, String keyStorePass, String alias) {
         try {
             //kreiramo instancu KeyStore
-            KeyStore ks = KeyStore.getInstance("PKCS12");
+            KeyStore ks = KeyStore.getInstance("PKCS12", new BouncyCastleProvider());
             //ucitavamo podatke
             BufferedInputStream in = new BufferedInputStream(new FileInputStream(keyStoreFile));
             ks.load(in, keyStorePass.toCharArray());
@@ -100,7 +99,7 @@ public class KeyStoreReader {
     public PrivateKey readPrivateKey(String keyStoreFile, String keyStorePass, String alias, String pass) {
         try {
             //kreiramo instancu KeyStore
-            KeyStore ks = KeyStore.getInstance("PKCS12");
+            KeyStore ks = KeyStore.getInstance("PKCS12", new BouncyCastleProvider());
             //ucitavamo podatke
             BufferedInputStream in = new BufferedInputStream(new FileInputStream(keyStoreFile));
             ks.load(in, keyStorePass.toCharArray());
@@ -127,7 +126,7 @@ public class KeyStoreReader {
 
     public KeyStore getKeyStore(String keyStoreFile, String passString) {
         try {
-            KeyStore ks = KeyStore.getInstance("PKCS12");
+            KeyStore ks = KeyStore.getInstance("PKCS12", new BouncyCastleProvider());
             BufferedInputStream in = new BufferedInputStream(new FileInputStream(keyStoreFile));
             char[] password = passString.toCharArray();
             try {
@@ -156,7 +155,7 @@ public class KeyStoreReader {
             X509Certificate cert = (X509Certificate) ks.getCertificate(entry);
 
             System.out.println(cert.getIssuerX500Principal().getName());
-            if(cert.getKeyUsage()[5]) {
+            if(cert.getKeyUsage()[5] && certificateChainSignaturesIsOk(ks.getCertificateChain(entry))) {
                 X500Name x500name = new JcaX509CertificateHolder(cert).getSubject();
                 RDN cn = x500name.getRDNs(BCStyle.CN)[0];
                 RDN org = x500name.getRDNs(BCStyle.O)[0];
@@ -170,10 +169,42 @@ public class KeyStoreReader {
         return certificateDTOList;
     }
 
+    public boolean certificateChainSignaturesIsOk(Certificate[] certificateChain) {
+        try{
+            int n = certificateChain.length;
+            System.out.println("Chain length " + n);
+            for (int i = 0; i < n - 1; i++) {
+                X509Certificate cert = (X509Certificate)certificateChain[i];
+                X509Certificate issuer = (X509Certificate)certificateChain[i + 1];
+
+                System.out.println(certificateRepository.getBySerialNumber(cert.getSerialNumber().toString()));
+                if (cert.getIssuerX500Principal().equals(issuer.getSubjectX500Principal()) == false) {
+                    throw new Exception("Certificates do not chain");
+                }
+                if(certificateRepository.getBySerialNumber(cert.getSerialNumber().toString()) != null) {
+                    return false;
+                }
+
+                cert.verify(issuer.getPublicKey());
+            }
+            X509Certificate last = (X509Certificate)certificateChain[n - 1];
+            // if self-signed, verify the final cert
+            if (last.getIssuerX500Principal().equals(last.getSubjectX500Principal())) {
+                last.verify(last.getPublicKey());
+                System.out.println("Verified: " + last.getSubjectX500Principal());
+            }
+
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public Certificate readCertificateBySerialNumber(String keyStoreFile, String keyStorePass, String serialNumber) {
         try {
             //kreiramo instancu KeyStore
-            KeyStore ks = KeyStore.getInstance("PKCS12");
+            KeyStore ks = KeyStore.getInstance("PKCS12", new BouncyCastleProvider());
             //ucitavamo podatke
             BufferedInputStream in = new BufferedInputStream(new FileInputStream(keyStoreFile));
             ks.load(in, keyStorePass.toCharArray());
@@ -230,7 +261,7 @@ public class KeyStoreReader {
             ArrayList<Certificate> ret = new ArrayList<>();
             while (aliases.hasMoreElements()) {
                 String alias = aliases.nextElement();
-                if (keyStore.isKeyEntry(alias)) {
+                if (keyStore.isKeyEntry(alias) && certificateChainSignaturesIsOk(keyStore.getCertificateChain(alias))) {
                     Certificate cert = keyStore.getCertificate(alias);
                     ret.add(cert);
                 }
@@ -247,10 +278,10 @@ public class KeyStoreReader {
         Enumeration<String> aliases = ks.aliases();
         while(aliases.hasMoreElements()) {
             String entry = aliases.nextElement();
-            System.out.println(entry);
+//            System.out.println(entry);
             X509Certificate cert = (X509Certificate) ks.getCertificate(entry);
 
-            System.out.println(cert.getIssuerX500Principal().getName());
+//            System.out.println(cert.getIssuerX500Principal().getName());
             X500Name x500name = new JcaX509CertificateHolder(cert).getSubject();
             RDN cn = x500name.getRDNs(BCStyle.CN)[0];
             RDN org = x500name.getRDNs(BCStyle.O)[0];
@@ -258,9 +289,15 @@ public class KeyStoreReader {
 
             X500Name x500nameIssuer = new JcaX509CertificateHolder(cert).getIssuer();
             RDN cnIssuer = x500nameIssuer.getRDNs(BCStyle.CN)[0];
-            certificateDTOList.add(new CertificateExchangeDTO(IETFUtils.valueToString(cn.getFirst().getValue()), IETFUtils.valueToString(org.getFirst().getValue()), IETFUtils.valueToString(email.getFirst().getValue()), IETFUtils.valueToString(cnIssuer.getFirst().getValue()), cert.getSerialNumber(), cert.getNotBefore(), cert.getNotAfter()));
-
+            System.out.println(
+                    "iz Find all certs " + entry
+            );
+            if(certificateChainSignaturesIsOk(ks.getCertificateChain(entry))) {
+                System.out.println("Iz findAllCerts" + cert.getSerialNumber().toString());
+                certificateDTOList.add(new CertificateExchangeDTO(IETFUtils.valueToString(cn.getFirst().getValue()), IETFUtils.valueToString(org.getFirst().getValue()), IETFUtils.valueToString(email.getFirst().getValue()), IETFUtils.valueToString(cnIssuer.getFirst().getValue()), cert.getSerialNumber(), cert.getNotBefore(), cert.getNotAfter()));
+            }
         }
         return certificateDTOList;
     }
+
 }
