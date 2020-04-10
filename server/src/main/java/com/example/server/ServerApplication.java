@@ -13,7 +13,6 @@ public class ServerApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(ServerApplication.class, args);
-		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 	}
 
 }

@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
-import java.util.Map;
 
 @RestController
 @RequestMapping(value="/api/admin")
@@ -20,6 +19,7 @@ public class AdminController {
     @Autowired
     private AdminService adminService;
 
+    //Checked
     @RequestMapping(value="/createCertificate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CertificateDTO> issueCertificate(@RequestBody CertificateDTO certificateDTO) {
         try{
@@ -34,6 +34,7 @@ public class AdminController {
         }
     }
 
+    //Checked
     @RequestMapping(value="/getAllKeyUsages", method = RequestMethod.GET)
     public ResponseEntity<KeyUsages[]> getAllKeyUsages() {
         try {
@@ -44,6 +45,7 @@ public class AdminController {
         }
     }
 
+    //Checked
     @RequestMapping(value="/getAllIssuerCerts", method = RequestMethod.GET)
     public ResponseEntity<ArrayList<CertificateExchangeDTO>> getAllIssuerCerts() {
         try {
@@ -54,6 +56,7 @@ public class AdminController {
         }
     }
 
+    //Checked
     @RequestMapping(value = "/getAllCerts", method = RequestMethod.GET)
     public ResponseEntity<ArrayList<CertificateExchangeDTO>> getAllCerts(){
         try{
@@ -63,6 +66,8 @@ public class AdminController {
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
         }
     }
+
+    //Checked
     @RequestMapping(value="/download", method = RequestMethod.PUT)
     public ResponseEntity<CertificateExchangeDTO> downloadCertificate(@RequestBody CertificateExchangeDTO certificateExchangeDTO){
         try{

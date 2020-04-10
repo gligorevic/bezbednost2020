@@ -28,6 +28,7 @@ import java.security.*;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.security.spec.ECGenParameterSpec;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -38,75 +39,39 @@ public class CertificateGenerator {
 
     public CertificateGenerator() {}
 
-    public X509Certificate generateCertificate(SubjectData subjectData, IssuerData issuerData, BigInteger issuerCSN, String aliasName, KeyUsages[] keyUsages) {
+    public X509Certificate generateCertificate(SubjectData subjectData, IssuerData issuerData, BigInteger issuerCSN, KeyUsages[] keyUsages) {
         try {
-            //Posto klasa za generisanje sertifiakta ne moze da primi direktno privatni kljuc pravi se builder za objekat
-            //Ovaj objekat sadrzi privatni kljuc izdavaoca sertifikata i koristiti se za potpisivanje sertifikata
-            //Parametar koji se prosledjuje je algoritam koji se koristi za potpisivanje sertifiakta
-            JcaContentSignerBuilder builder = new JcaContentSignerBuilder("SHA256WithRSAEncryption");
-            //Takodje se navodi koji provider se koristi, u ovom slucaju Bouncy Castle
-            builder = builder.setProvider(new BouncyCastleProvider());
+            JcaContentSignerBuilder builder = new JcaContentSignerBuilder("SHA256WithECDSA");
 
-            //Formira se objekat koji ce sadrzati privatni kljuc i koji ce se koristiti za potpisivanje sertifikata
+            builder = builder.setProvider("BC");
+
             ContentSigner contentSigner = builder.build(issuerData.getPrivateKey());
 
-            //Postavljaju se podaci za generisanje sertifiakta
             X509v3CertificateBuilder certGen = new JcaX509v3CertificateBuilder(issuerData.getX500name(),
                     new BigInteger(subjectData.getSerialNumber()),
                     subjectData.getStartDate(),
                     subjectData.getEndDate(),
                     subjectData.getX500name(),
                     subjectData.getPublicKey());
-            //Generise se sertifikat
             try {
-
-                    certGen.addExtension(Extension.keyUsage, false, getKeyUsage(keyUsages));
-
-                    AccessDescription caIssuers = new AccessDescription(AccessDescription.id_ad_caIssuers,
-                        new GeneralName(GeneralName.uniformResourceIdentifier,
-                                new DERIA5String("http://localhost:8080/files/certificates/") + issuerCSN.toString() + ".crt"));
-
+                certGen.addExtension(Extension.keyUsage, false, getKeyUsage(keyUsages));
+                AccessDescription caIssuers = new AccessDescription(AccessDescription.id_ad_caIssuers, new GeneralName(GeneralName.uniformResourceIdentifier, new DERIA5String("http://localhost:8080/files/certificates/") + issuerCSN.toString() + ".crt"));
 
                 ASN1EncodableVector aia_ASN = new ASN1EncodableVector();
                 aia_ASN.add(caIssuers);
 
                 certGen.addExtension(Extension.authorityInfoAccess, false, new DERSequence(aia_ASN));
-
-
             }catch(Exception e) {
                 e.printStackTrace();
             }
 
             X509CertificateHolder certHolder = certGen.build(contentSigner);
 
-            //Builder generise sertifikat kao objekat klase X509CertificateHolder
-            //Nakon toga je potrebno certHolder konvertovati u sertifikat, za sta se koristi certConverter
             JcaX509CertificateConverter certConverter = new JcaX509CertificateConverter();
-            certConverter = certConverter.setProvider(new BouncyCastleProvider());
+            certConverter = certConverter.setProvider("BC");
 
-            FileOutputStream os = new FileOutputStream(".\\files\\certificates\\" + serialNumber + ".cer");
-            os.write("-----BEGIN CERTIFICATE-----\n".getBytes("US-ASCII"));
-            os.write(Base64.encodeBase64(certConverter.getCertificate(certHolder).getEncoded(), true));
-            os.write("-----END CERTIFICATE-----\n".getBytes("US-ASCII"));
-            os.close();
-
-            //Konvertuje objekat u sertifikat
-            return certConverter.setProvider(new BouncyCastleProvider()).getCertificate(certHolder);
-        } catch (CertificateEncodingException e) {
-            e.printStackTrace();
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace();
-        } catch (IllegalStateException e) {
-            e.printStackTrace();
-        } catch (OperatorCreationException e) {
-            e.printStackTrace();
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+            return certConverter.getCertificate(certHolder);
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
@@ -150,7 +115,7 @@ public class CertificateGenerator {
         return new KeyUsage(keyValue);
     }
 
-    public static IssuerData generateIssuerData(String CN, String O, String OU, String C, String E, PrivateKey issuerKey) {
+    public static IssuerData generateIssuerData(String CN, String O, String OU, String C, String E, PrivateKey issuerKey, String uid) {
         X500NameBuilder builder = new X500NameBuilder(BCStyle.INSTANCE);
         builder.addRDN(BCStyle.CN, CN);
         builder.addRDN(BCStyle.O, O);
@@ -158,7 +123,7 @@ public class CertificateGenerator {
         builder.addRDN(BCStyle.C, C);
         builder.addRDN(BCStyle.E, E);
         //UID (USER ID) je ID korisnika
-        builder.addRDN(BCStyle.UID, String.valueOf(UUID.randomUUID()));
+        builder.addRDN(BCStyle.UID, uid);
 
         //Kreiraju se podaci za issuer-a, sto u ovom slucaju ukljucuje:
         // - privatni kljuc koji ce se koristiti da potpise sertifikat koji se izdaje
@@ -166,30 +131,29 @@ public class CertificateGenerator {
         return new IssuerData(issuerKey, builder.build());
     }
 
-    public static SubjectData generateSubjectData(String CN, String O, String OU, String C, String E, Date notBefore, Date notAfter) {
+    public static SubjectData generateSubjectData(String CN, String O, String OU, String C, String E, Date notBefore, Date notAfter, KeyPair keyPairParam) {
         try {
-            KeyPair keyPairSubject = generateKeyPair();
+            KeyPair keyPairSubject;
+            if(keyPairParam == null) {
+                keyPairSubject = generateKeyPair();
+            } else {
+                keyPairSubject = keyPairParam;
+            }
 
-            //Datumi od kad do kad vazi sertifikat
             SimpleDateFormat iso8601Formater = new SimpleDateFormat("yyyy-MM-dd");
             Date startDate = iso8601Formater.parse(iso8601Formater.format(notBefore));
             Date endDate = iso8601Formater.parse(iso8601Formater.format(notAfter));
 
-            //klasa X500NameBuilder pravi X500Name objekat koji predstavlja podatke o vlasniku
             X500NameBuilder builder = new X500NameBuilder(BCStyle.INSTANCE);
             builder.addRDN(BCStyle.CN, CN);
             builder.addRDN(BCStyle.O, O);
             builder.addRDN(BCStyle.OU, OU);
             builder.addRDN(BCStyle.C, C);
             builder.addRDN(BCStyle.E, E);
-            //UID (USER ID) je ID korisnika
+
             builder.addRDN(BCStyle.UID, String.valueOf(UUID.randomUUID()));
 
-            //Kreiraju se podaci za sertifikat, sto ukljucuje:
-            // - javni kljuc koji se vezuje za sertifikat
-            // - podatke o vlasniku
-            // - serijski broj sertifikata
-            // - od kada do kada vazi sertifikat
+
             return new SubjectData(keyPairSubject.getPublic(), builder.build(), addSerialNumber(), startDate, endDate);
         } catch (ParseException e) {
             e.printStackTrace();
@@ -205,22 +169,11 @@ public class CertificateGenerator {
 
     public static KeyPair generateKeyPair() {
         try {
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-
-            // SecureRandom.getInstance - PARAMETRI -->
-            // The name of the pseudo-random number generation (PRNG) algorithm supplied by the SUN provider.
-            // This algorithm uses SHA-1 as the foundation of the PRNG. It computes the SHA-1 hash over a true-random
-            // seed value concatenated with a 64-bit counter which is incremented by 1 for each operation.
-            // From the 160-bit SHA-1 output, only 64 bits are used.
-
-            SecureRandom random = SecureRandom.getInstance("SHA1PRNG", "SUN");
-
-            // 2048 - The maximum key size that the provider supports for the cryptographic service.
-            keyGen.initialize(2048, random);
-            return keyGen.generateKeyPair();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (NoSuchProviderException e) {
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC", "SunEC");
+            ECGenParameterSpec ecsp = new ECGenParameterSpec("secp256r1");
+            keyGen.initialize(ecsp);
+            return keyGen.genKeyPair();
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
