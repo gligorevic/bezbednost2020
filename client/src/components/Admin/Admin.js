@@ -123,6 +123,8 @@ export default function HorizontalLinearStepper() {
             setCertificate={setCertificate}
             changeMaxDate={changeMaxDate}
             changeMinDate={changeMinDate}
+            handleNext={handleNext}
+            setUsage={setUsage}
           />
         );
       case 2:
@@ -157,7 +159,8 @@ export default function HorizontalLinearStepper() {
     state.notBefore = selectedDateFrom;
     const resp = await Axios.post("/api/admin/createCertificate", {
       ...state,
-      issuer: certificate.serialNumber,
+      issuer:
+        certificate.serialNumber === null ? null : certificate.serialNumber,
       keyUsages: usages,
     });
     setLoading(false);

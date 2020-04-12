@@ -8,6 +8,7 @@ import com.example.server.data.IssuerData;
 import com.example.server.data.SubjectData;
 import com.example.server.dto.CertificateDTO;
 import com.example.server.dto.CertificateExchangeDTO;
+import com.example.server.enumeration.KeyUsages;
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -25,6 +26,7 @@ import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.cert.*;
 import java.util.ArrayList;
+import java.util.Date;
 
 @Service
 public class AdminService {
@@ -44,7 +46,33 @@ public class AdminService {
             KeyPair keyPair = CertificateGenerator.generateKeyPair();
             SubjectData subjectData = CertificateGenerator.generateSubjectData(certificateDTO.getCommonName(),certificateDTO.getOrganization(), certificateDTO.getOrganizationalUnit(), certificateDTO.getCity(), certificateDTO.getMail(), certificateDTO.getNotBefore(), certificateDTO.getNotAfter(), keyPair);
 
-            X509Certificate issuerCert = (X509Certificate) keyStoreService.readCertificateBySerialNumber(keyStore, certificateDTO.getIssuer());
+            X509Certificate issuerCert;
+
+            if(certificateDTO.getIssuer() == null){
+                System.out.println("Pravi se root sertifikat");
+                IssuerData issuerData = CertificateGenerator.generateIssuerData(certificateDTO.getCommonName(),certificateDTO.getOrganization(), certificateDTO.getOrganizationalUnit(), certificateDTO.getCity(), certificateDTO.getMail(), keyPair.getPrivate(), IETFUtils.valueToString(subjectData.getX500name().getRDNs(BCStyle.UID)[0].getFirst().getValue()));
+
+                CertificateGenerator cg = new CertificateGenerator();
+                X509Certificate cert = cg.generateCertificate(subjectData, issuerData, BigInteger.valueOf(keyStore.size()), new KeyUsages[]{KeyUsages.KEY_CERT_SIGN, KeyUsages.CRL_SIGN }, certificateDTO.getNotBefore(), certificateDTO.getNotAfter());
+
+                keyStoreService.write(keyStore, certificateDTO.getCommonName(), keyPair.getPrivate(), Constants.password.toCharArray(), cert, null);
+                keyStoreService.saveKeyStore(keyStore, Constants.keystoreFilePath, Constants.password.toCharArray());
+
+                Certificate certificate = keyStoreService.readCertificate(keyStore, "dsa");
+                X509Certificate c = (X509Certificate) certificate;
+
+                System.out.println("================================================");
+                System.out.println("Napravljen root" + keyStore.size());
+                System.out.println("Issuer\n");
+                System.out.println(cert.getIssuerDN().getName());
+
+                System.out.println("Subject\n");
+                System.out.println(c.getSubjectX500Principal().getName());
+                System.out.println("===============================================");
+                return null;
+            }else{
+                issuerCert = (X509Certificate) keyStoreService.readCertificateBySerialNumber(keyStore, certificateDTO.getIssuer());
+            }
 
             BigInteger issuerCertSN = issuerCert.getSerialNumber();
 
@@ -64,6 +92,7 @@ public class AdminService {
             }
             CertificateGenerator cg = new CertificateGenerator();
             X509Certificate cert = cg.generateCertificate(subjectData, issuerData, issuerCertSN, certificateDTO.getKeyUsages(), certificateDTO.getNotBefore(), certificateDTO.getNotAfter());
+
 
             keyStoreService.write(keyStore, certificateDTO.getCommonName(), keyPair.getPrivate(), Constants.password.toCharArray(), cert, issuerCert);
             keyStoreService.saveKeyStore(keyStore, Constants.keystoreFilePath, Constants.password.toCharArray());
