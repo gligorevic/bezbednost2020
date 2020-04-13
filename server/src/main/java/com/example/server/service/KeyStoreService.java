@@ -7,18 +7,15 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,6 +27,9 @@ public class KeyStoreService {
 
     @Autowired
     private CertificateRepository certificateRepository;
+
+    @Autowired
+    private CertificateService certificateService;
 
     public KeyStore getKeyStore(String keyStoreFile, String passString) {
         try {
@@ -243,7 +243,7 @@ public class KeyStoreService {
             String entry = aliases.nextElement();
             X509Certificate cert = (X509Certificate) ks.getCertificate(entry);
 
-            if(cert.getKeyUsage()[5] && validateChain(ks.getCertificateChain(entry))) {
+            if(cert.getKeyUsage()[5] && certificateService.checkPrivateKeyDuration(cert) && validateChain(ks.getCertificateChain(entry))) {
                 X500Name x500name = new JcaX509CertificateHolder(cert).getSubject();
                 RDN cn = x500name.getRDNs(BCStyle.CN)[0];
                 RDN org = x500name.getRDNs(BCStyle.O)[0];
@@ -256,5 +256,6 @@ public class KeyStoreService {
         }
         return certificateDTOList;
     }
+
 
 }

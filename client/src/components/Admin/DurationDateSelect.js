@@ -53,7 +53,7 @@ export default function DurationDateSelect({
   return (
     <Paper className={classes.paper}>
       <Grid container>
-        <Grid style={{ textAlign: "center" }} item sm={12} lg={3}>
+        <Grid style={{ textAlign: "center" }} item sm={12}>
           <h3>Select duration of certificate</h3>
 
           <Typography
@@ -67,7 +67,7 @@ export default function DurationDateSelect({
           <Divider />
         </Grid>
 
-        <Grid style={{ textAlign: "center" }} item sm={12} md={6} lg={3}>
+        <Grid style={{ textAlign: "center" }} item sm={12} md={6}>
           <h3>Select start date</h3>
           <MuiPickersUtilsProvider utils={DateFnsUtils} id="fromDate">
             <KeyboardDatePicker
@@ -77,15 +77,15 @@ export default function DurationDateSelect({
               KeyboardButtonProps={{
                 "aria-label": "change date",
               }}
-              minDate={issuer.notBefore}
-              maxDate={selectedDateEnd}
+              minDate={issuer ? issuer.notBefore : new Date()}
+              maxDate={!selectedDateEnd && selectedDateEnd}
               value={selectedDateFrom}
               onChange={handleDateChangeFrom}
             />
           </MuiPickersUtilsProvider>
         </Grid>
 
-        <Grid style={{ textAlign: "center" }} item sm={12} md={6} lg={3}>
+        <Grid style={{ textAlign: "center" }} item sm={12} md={6}>
           <h3>Select end date</h3>
           <MuiPickersUtilsProvider utils={DateFnsUtils} id="endDate">
             <KeyboardDatePicker
@@ -95,9 +95,13 @@ export default function DurationDateSelect({
               KeyboardButtonProps={{
                 "aria-label": "change date",
               }}
-              minDate={issuer.notBefore}
-              value={selectedDateEnd}
-              maxDate={issuer.notAfter}
+              minDate={issuer ? issuer.notBefore : selectedDateFrom}
+              value={selectedDateEnd || selectedDateFrom}
+              maxDate={
+                issuer
+                  ? issuer.notAfter
+                  : new Date().setFullYear(new Date().getFullYear() + 20)
+              }
               onChange={handleDateChangeEnd}
             />
           </MuiPickersUtilsProvider>

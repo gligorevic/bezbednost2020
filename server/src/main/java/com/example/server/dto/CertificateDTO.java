@@ -23,6 +23,8 @@ public class CertificateDTO {
 
    private String issuer;
 
+   private String certificateType;
+
    private Date notBefore;
 
    private Date notAfter;
@@ -42,6 +44,14 @@ public class CertificateDTO {
       this.issuer = issuer;
       this.notBefore = notBefore;
       this.notAfter = notAfter;
+   }
+
+   public String getCertificateType() {
+      return certificateType;
+   }
+
+   public void setCertificateType(String certificateType) {
+      this.certificateType = certificateType;
    }
 
    public void setKeyUsages(KeyUsages[] keyUsages) {

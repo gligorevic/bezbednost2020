@@ -24,6 +24,7 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.spec.ECGenParameterSpec;
+import java.text.MessageFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
@@ -102,7 +103,6 @@ public class CertificateGenerator {
             JcaX509CertificateConverter certConverter = new JcaX509CertificateConverter();
             certConverter = certConverter.setProvider("BC");
 
-            byte[] UID =  certConverter.getCertificate(certHolder).getExtensionValue("2.5.29.16");
 
             /*ASN1Object asn1Object = ASN1OctetString.getInstance(certConverter.getCertificate(certHolder).getExtensionValue("2.5.29.16")).getLoadedObject();
             ASN1EncodableVector v = new ASN1EncodableVector();

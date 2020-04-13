@@ -68,15 +68,23 @@ export default function HorizontalLinearStepper() {
   const steps = getSteps();
 
   const handleNext = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep + 1);
+    setActiveStep(
+      (prevActiveStep) =>
+        prevActiveStep + (prevActiveStep === 0 && type === "root" ? 2 : 1)
+    );
   };
 
   const handleBack = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep - 1);
+    setActiveStep(
+      (prevActiveStep) =>
+        prevActiveStep - (prevActiveStep === 2 && type === "root" ? 2 : 1)
+    );
   };
 
   const [selectedDateFrom, setSelectedDateFrom] = React.useState(new Date());
-  const [selectedDateEnd, setSelectedDateEnd] = React.useState(new Date());
+  const [selectedDateEnd, setSelectedDateEnd] = React.useState();
+
+  const [type, setType] = useState();
 
   const changeMaxDate = (date) => {
     setSelectedDateEnd(date);
@@ -113,6 +121,9 @@ export default function HorizontalLinearStepper() {
             setUsage={setUsage}
             state={state}
             setState={setState}
+            type={type}
+            setType={setType}
+            setCertificate={setCertificate}
           />
         );
       case 1:
@@ -155,12 +166,11 @@ export default function HorizontalLinearStepper() {
 
   const handleSubmit = async (e) => {
     setLoading(true);
-    state.notAfter = selectedDateEnd;
+    state.notAfter = selectedDateEnd ? selectedDateEnd : selectedDateFrom;
     state.notBefore = selectedDateFrom;
     const resp = await Axios.post("/api/admin/createCertificate", {
       ...state,
-      issuer:
-        certificate.serialNumber === null ? null : certificate.serialNumber,
+      issuer: certificate.serialNumber,
       keyUsages: usages,
     });
     setLoading(false);
@@ -214,6 +224,15 @@ export default function HorizontalLinearStepper() {
                   color="primary"
                   onClick={handleNext}
                   className={classes.button}
+                  disabled={
+                    usages.length === 0 ||
+                    !Object.values(state).every((field) => field !== "") ||
+                    (activeStep === 1 && certificate === "") ||
+                    (activeStep === 2 &&
+                      selectedDateEnd &&
+                      selectedDateFrom > selectedDateEnd) ||
+                    (activeStep === 2 && !selectedDateEnd)
+                  }
                 >
                   "Next"
                 </Button>

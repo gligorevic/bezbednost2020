@@ -44,7 +44,9 @@ export default function ConfirmIssuing({
   const formattedDateEnd = format(
     typeof selectedDateEnd == "string"
       ? parseISO(selectedDateEnd)
-      : selectedDateEnd,
+      : selectedDateEnd
+      ? selectedDateEnd
+      : new Date(),
     "MMMM dd, yyyy"
   );
   return (
@@ -209,7 +211,7 @@ export default function ConfirmIssuing({
                   className={classes.inline}
                   color="textPrimary"
                 >
-                  {issuer.name}
+                  {issuer !== "" ? issuer.name : certificate.commonName}
                 </Typography>
               }
             />
@@ -224,7 +226,9 @@ export default function ConfirmIssuing({
                   className={classes.inline}
                   color="textPrimary"
                 >
-                  {issuer.organization}
+                  {issuer !== ""
+                    ? issuer.organization
+                    : certificate.organization}
                 </Typography>
               }
             />

@@ -10,21 +10,28 @@ import com.example.server.dto.CertificateDTO;
 import com.example.server.dto.CertificateExchangeDTO;
 import com.example.server.enumeration.KeyUsages;
 import org.apache.tomcat.util.codec.binary.Base64;
+import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x500.style.IETFUtils;
+import org.bouncycastle.asn1.x509.PrivateKeyUsagePeriod;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
+import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.io.FileOutputStream;
 
 import java.security.KeyPair;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.cert.*;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -39,79 +46,80 @@ public class AdminService {
 
 
     //Checked  Dodati opciono generisanje vise root sertifikata
-    public CertificateDTO createCertificate(CertificateDTO certificateDTO) {
-        try {
-            KeyStore keyStore = keyStoreService.getKeyStore(Constants.keystoreFilePath, Constants.password);
+    public CertificateDTO createCertificate(CertificateDTO certificateDTO) throws Exception {
 
-            KeyPair keyPair = CertificateGenerator.generateKeyPair();
-            SubjectData subjectData = CertificateGenerator.generateSubjectData(certificateDTO.getCommonName(),certificateDTO.getOrganization(), certificateDTO.getOrganizationalUnit(), certificateDTO.getCity(), certificateDTO.getMail(), certificateDTO.getNotBefore(), certificateDTO.getNotAfter(), keyPair);
+        KeyStore keyStore = keyStoreService.getKeyStore(Constants.keystoreFilePath, Constants.password);
 
-            X509Certificate issuerCert;
+        KeyPair keyPair = CertificateGenerator.generateKeyPair();
+        SubjectData subjectData = CertificateGenerator.generateSubjectData(certificateDTO.getCommonName(),certificateDTO.getOrganization(), certificateDTO.getOrganizationalUnit(), certificateDTO.getCity(), certificateDTO.getMail(), certificateDTO.getNotBefore(), certificateDTO.getNotAfter(), keyPair);
 
-            if(certificateDTO.getIssuer() == null){
-                System.out.println("Pravi se root sertifikat");
-                IssuerData issuerData = CertificateGenerator.generateIssuerData(certificateDTO.getCommonName(),certificateDTO.getOrganization(), certificateDTO.getOrganizationalUnit(), certificateDTO.getCity(), certificateDTO.getMail(), keyPair.getPrivate(), IETFUtils.valueToString(subjectData.getX500name().getRDNs(BCStyle.UID)[0].getFirst().getValue()));
+        X509Certificate issuerCert;
 
-                CertificateGenerator cg = new CertificateGenerator();
-                X509Certificate cert = cg.generateCertificate(subjectData, issuerData, BigInteger.valueOf(keyStore.size()), new KeyUsages[]{KeyUsages.KEY_CERT_SIGN, KeyUsages.CRL_SIGN }, certificateDTO.getNotBefore(), certificateDTO.getNotAfter());
+        if(certificateDTO.getIssuer() == null){
+            System.out.println("Pravi se root sertifikat");
+            IssuerData issuerData = CertificateGenerator.generateIssuerData(certificateDTO.getCommonName(),certificateDTO.getOrganization(), certificateDTO.getOrganizationalUnit(), certificateDTO.getCity(), certificateDTO.getMail(), keyPair.getPrivate(), IETFUtils.valueToString(subjectData.getX500name().getRDNs(BCStyle.UID)[0].getFirst().getValue()));
 
-                keyStoreService.write(keyStore, certificateDTO.getCommonName(), keyPair.getPrivate(), Constants.password.toCharArray(), cert, null);
-                keyStoreService.saveKeyStore(keyStore, Constants.keystoreFilePath, Constants.password.toCharArray());
-
-                Certificate certificate = keyStoreService.readCertificate(keyStore, "dsa");
-                X509Certificate c = (X509Certificate) certificate;
-
-                System.out.println("================================================");
-                System.out.println("Napravljen root" + keyStore.size());
-                System.out.println("Issuer\n");
-                System.out.println(cert.getIssuerDN().getName());
-
-                System.out.println("Subject\n");
-                System.out.println(c.getSubjectX500Principal().getName());
-                System.out.println("===============================================");
-                return null;
-            }else{
-                issuerCert = (X509Certificate) keyStoreService.readCertificateBySerialNumber(keyStore, certificateDTO.getIssuer());
-            }
-
-            BigInteger issuerCertSN = issuerCert.getSerialNumber();
-
-            X500Name x500name = new JcaX509CertificateHolder(issuerCert).getSubject();
-            RDN cn = x500name.getRDNs(BCStyle.CN)[0];
-            RDN org = x500name.getRDNs(BCStyle.O)[0];
-            RDN email = x500name.getRDNs(BCStyle.E)[0];
-            RDN ou = x500name.getRDNs(BCStyle.OU)[0];
-            RDN city = x500name.getRDNs(BCStyle.C)[0];
-            RDN uid = x500name.getRDNs(BCStyle.UID)[0];
-
-            IssuerData issuerData = CertificateGenerator.generateIssuerData(rdnToString(cn), rdnToString(org),rdnToString(ou),rdnToString(city),rdnToString(email), keyStoreService.getPrivateKey(keyStore, rdnToString(cn), Constants.password), rdnToString(uid));
-
-            //provera da li se vreme validnosti sertifikata nalazi u okviru vremena validnosti issuer-a
-            if(certificateDTO.getNotAfter().after(issuerCert.getNotAfter()) || certificateDTO.getNotBefore().before(issuerCert.getNotBefore())){
-                return null;
-            }
             CertificateGenerator cg = new CertificateGenerator();
-            X509Certificate cert = cg.generateCertificate(subjectData, issuerData, issuerCertSN, certificateDTO.getKeyUsages(), certificateDTO.getNotBefore(), certificateDTO.getNotAfter());
+            X509Certificate cert = cg.generateCertificate(subjectData, issuerData, BigInteger.valueOf(keyStore.size()), new KeyUsages[]{KeyUsages.KEY_CERT_SIGN, KeyUsages.CRL_SIGN }, certificateDTO.getNotBefore(), certificateDTO.getNotAfter());
 
-
-            keyStoreService.write(keyStore, certificateDTO.getCommonName(), keyPair.getPrivate(), Constants.password.toCharArray(), cert, issuerCert);
+            keyStoreService.write(keyStore, certificateDTO.getCommonName(), keyPair.getPrivate(), Constants.password.toCharArray(), cert, null);
             keyStoreService.saveKeyStore(keyStore, Constants.keystoreFilePath, Constants.password.toCharArray());
 
             Certificate certificate = keyStoreService.readCertificate(keyStore, certificateDTO.getCommonName());
             X509Certificate c = (X509Certificate) certificate;
 
+            System.out.println("================================================");
+            System.out.println("Napravljen root" + keyStore.size());
             System.out.println("Issuer\n");
-            System.out.println(c.getIssuerDN().getName());
+            System.out.println(cert.getIssuerDN().getName());
 
             System.out.println("Subject\n");
             System.out.println(c.getSubjectX500Principal().getName());
-            System.out.println(c.getNotAfter());
-            System.out.println(c.getNotBefore());
-        } catch(Exception e) {
-            e.printStackTrace();
+            System.out.println("===============================================");
+            return certificateDTO;
+        }else{
+            issuerCert = (X509Certificate) keyStoreService.readCertificateBySerialNumber(keyStore, certificateDTO.getIssuer());
+
+            if(!certificateService.checkPrivateKeyDuration(issuerCert)) {
+                throw new Exception("Issuer private key is not active");
+            }
         }
 
-        return null;
+        BigInteger issuerCertSN = issuerCert.getSerialNumber();
+
+        X500Name x500name = new JcaX509CertificateHolder(issuerCert).getSubject();
+        RDN cn = x500name.getRDNs(BCStyle.CN)[0];
+        RDN org = x500name.getRDNs(BCStyle.O)[0];
+        RDN email = x500name.getRDNs(BCStyle.E)[0];
+        RDN ou = x500name.getRDNs(BCStyle.OU)[0];
+        RDN city = x500name.getRDNs(BCStyle.C)[0];
+        RDN uid = x500name.getRDNs(BCStyle.UID)[0];
+
+        IssuerData issuerData = CertificateGenerator.generateIssuerData(rdnToString(cn), rdnToString(org),rdnToString(ou),rdnToString(city),rdnToString(email), keyStoreService.getPrivateKey(keyStore, rdnToString(cn), Constants.password), rdnToString(uid));
+
+        //provera da li se vreme validnosti sertifikata nalazi u okviru vremena validnosti issuer-a
+        if(certificateDTO.getNotAfter().after(issuerCert.getNotAfter()) || certificateDTO.getNotBefore().before(issuerCert.getNotBefore()) || certificateDTO.getNotAfter().before(new Date())){
+            throw new Exception("Invalid date");
+        }
+        CertificateGenerator cg = new CertificateGenerator();
+        X509Certificate cert = cg.generateCertificate(subjectData, issuerData, issuerCertSN, certificateDTO.getKeyUsages(), certificateDTO.getNotBefore(), certificateDTO.getNotAfter());
+
+
+        keyStoreService.write(keyStore, certificateDTO.getCommonName(), keyPair.getPrivate(), Constants.password.toCharArray(), cert, issuerCert);
+        keyStoreService.saveKeyStore(keyStore, Constants.keystoreFilePath, Constants.password.toCharArray());
+
+        Certificate certificate = keyStoreService.readCertificate(keyStore, certificateDTO.getCommonName());
+        X509Certificate c = (X509Certificate) certificate;
+
+        System.out.println("Issuer\n");
+        System.out.println(c.getIssuerDN().getName());
+
+        System.out.println("Subject\n");
+        System.out.println(c.getSubjectX500Principal().getName());
+        System.out.println(c.getNotAfter());
+        System.out.println(c.getNotBefore());
+
+        return certificateDTO;
     }
 
     private String rdnToString(RDN rdn) {

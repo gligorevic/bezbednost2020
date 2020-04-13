@@ -99,7 +99,6 @@ const CertificatesList = ({ getAllCertificates, certificates, history }) => {
 
   const handleDownload = async (e, row) => {
     setLoading(true);
-    console.log(row);
     const resp = await Axios.put(`/api/admin/download`, row);
     setLoading(false);
     if (resp.status === 200) {
@@ -397,7 +396,8 @@ const CertificatesList = ({ getAllCertificates, certificates, history }) => {
           <DialogContent>
             <DialogContentText>
               After you click "Agree" button certificate will be revocated
-              permanently. You need to write revocation reason.
+              permanently. <br />
+              You need to write revocation reason.
             </DialogContentText>
             <TextField
               autoFocus
@@ -406,6 +406,10 @@ const CertificatesList = ({ getAllCertificates, certificates, history }) => {
               label="Revocation reason"
               type="text"
               onChange={handleChange}
+              error={revokeReason.length === 0}
+              helperText={
+                revokeReason.length === 0 && "Revocation reason is required."
+              }
               fullWidth
             />
           </DialogContent>
@@ -413,7 +417,11 @@ const CertificatesList = ({ getAllCertificates, certificates, history }) => {
             <Button onClick={handleCloseRevocation} color="secundary">
               Cancel
             </Button>
-            <Button onClick={handleRevoke} color="primary">
+            <Button
+              onClick={handleRevoke}
+              disabled={revokeReason.length === 0}
+              color="primary"
+            >
               Agree
             </Button>
           </DialogActions>

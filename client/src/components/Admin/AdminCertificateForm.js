@@ -25,6 +25,15 @@ const useStyles = makeStyles((theme) => ({
   textCenter: {
     textAlign: "center",
   },
+
+  certificateUsage: {
+    marginTop: 30,
+    marginBottom: 50,
+  },
+  certificateUsageList: {
+    display: "flex",
+    justifyContent: "space-between",
+  },
 }));
 
 const AdminCertificateForm = ({
@@ -34,8 +43,31 @@ const AdminCertificateForm = ({
   setUsage,
   state,
   setState,
+  type,
+  setType,
+  setCertificate,
 }) => {
   const classes = useStyles();
+
+  const certType = { root: "root", ca: "ca", endEntity: "endEntity" };
+
+  const certTypeKeyUsages = {
+    root: new Map([
+      ["CRL_SIGN", true],
+      ["DIGITAL_SIGNATURE", true],
+      ["KEY_CERT_SIGN", true],
+    ]),
+    endEntity: new Map([
+      ["DIGITAL_SIGNATURE", true],
+      ["KEY_AGREEMENT", true],
+    ]),
+    ca: new Map([
+      ["CRL_SIGN", true],
+      ["KEY_CERT_SIGN", true],
+      ["DIGITAL_SIGNATURE", true],
+      ["KEY_ENCIPHERMENT", true],
+    ]),
+  };
 
   useEffect(() => {
     getAllKeyUsages();
@@ -62,6 +94,20 @@ const AdminCertificateForm = ({
     setState({ ...state, [e.target.name]: e.target.value });
   };
 
+  const handleToggleType = (value) => {
+    if (type === value) {
+      setType(null);
+      setUsage([]);
+    } else {
+      setType(value);
+      setUsage([...certTypeKeyUsages[value].keys()]);
+    }
+
+    if (value === "root") {
+      setCertificate("");
+    }
+  };
+
   return (
     <>
       <h1 className={classes.textCenter}>Certificate data</h1>
@@ -82,6 +128,7 @@ const AdminCertificateForm = ({
                         role={undefined}
                         dense
                         button
+                        disabled={type != null && type != "ca"}
                         onClick={() => handleToggle(value)}
                       >
                         <ListItemIcon>
@@ -143,6 +190,61 @@ const AdminCertificateForm = ({
                 value={state.mail}
                 label="Mail"
               />
+            </Paper>
+            <Paper className={classes.certificateUsage}>
+              <h3 style={{ textAlign: "center", margin: 0, paddingTop: 9 }}>
+                Templates
+              </h3>
+              <List className={classes.certificateUsageList}>
+                <ListItem
+                  role={undefined}
+                  dense
+                  button
+                  onClick={() => handleToggleType(certType.root)}
+                >
+                  <ListItemIcon>
+                    <Checkbox
+                      edge="start"
+                      checked={type === certType.root}
+                      tabIndex={-1}
+                      disableRipple
+                    />
+                  </ListItemIcon>
+                  <ListItemText primary="ROOT" />
+                </ListItem>
+                <ListItem
+                  role={undefined}
+                  dense
+                  button
+                  onClick={() => handleToggleType(certType.ca)}
+                >
+                  <ListItemIcon>
+                    <Checkbox
+                      edge="start"
+                      checked={type === certType.ca}
+                      tabIndex={-1}
+                      disableRipple
+                    />
+                  </ListItemIcon>
+                  <ListItemText primary="CA" />
+                </ListItem>
+                <ListItem
+                  role={undefined}
+                  dense
+                  button
+                  onClick={() => handleToggleType(certType.endEntity)}
+                >
+                  <ListItemIcon>
+                    <Checkbox
+                      edge="start"
+                      checked={type === certType.endEntity}
+                      tabIndex={-1}
+                      disableRipple
+                    />
+                  </ListItemIcon>
+                  <ListItemText primary="END-ENTITY" />
+                </ListItem>
+              </List>
             </Paper>
           </Grid>
         </Grid>

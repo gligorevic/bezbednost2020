@@ -32,13 +32,10 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function CertificateSelect({
-  usages,
   certificate,
   setCertificate,
   changeMaxDate,
   changeMinDate,
-  handleNext,
-  setUsage,
 }) {
   const classes = useStyles();
 
@@ -55,12 +52,6 @@ export default function CertificateSelect({
     setCertificate(cert);
     changeMaxDate(cert.notAfter);
     changeMinDate(cert.notBefore);
-  };
-
-  const handleRoot = () => {
-    setCertificate(-1);
-    setUsage(["CRL_SIGN", "DIGITAL_SIGNATURE", "KEY_CERT_SIGN"]);
-    handleNext();
   };
 
   return (
@@ -185,9 +176,7 @@ export default function CertificateSelect({
                       // position: "relative",
                     }}
                   >
-                    {
-                      'NOTE: If you select "Root certificate" key usages will be set to: "CRL_SIGN","DIGITAL_SIGNATURE" and "KEY_CERT_SIGN"'
-                    }
+                    {"NOTE: Select issuer certificate"}
                   </p>
                 </div>
               )}
@@ -196,10 +185,6 @@ export default function CertificateSelect({
           <Grid item xs={3}>
             <Paper className={classes.paperSelect}>
               <MenuList>
-                <MenuItem key={-1} onClick={() => handleRoot()}>
-                  Root certificate
-                </MenuItem>
-                <Divider style={{ margin: 17 }} component="li" />
                 {issuerCerts.map((cert) => {
                   return (
                     <MenuItem
