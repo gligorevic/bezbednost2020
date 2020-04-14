@@ -11,6 +11,7 @@ public class CertificateExchangeDTO {
     private String issuerName;
     private Date notBefore;
     private Date notAfter;
+    private String reason;
 
     public CertificateExchangeDTO(String name, String organization, String email, String issuerName, BigInteger serialNumber, Date notBefore, Date notAfter) {
         this.name = name;
@@ -20,6 +21,14 @@ public class CertificateExchangeDTO {
         this.issuerName = issuerName;
         this.notBefore = notBefore;
         this.notAfter = notAfter;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
     }
 
     public String getName() {

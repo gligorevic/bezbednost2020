@@ -67,6 +67,16 @@ public class AdminController {
         }
     }
 
+    @RequestMapping(value = "/getAllRevocatedCerts", method = RequestMethod.GET)
+    public ResponseEntity<ArrayList<CertificateExchangeDTO>> getAllRevocatedCerts(){
+        try{
+            return new ResponseEntity<>(adminService.getAllRevocatedCerts(), HttpStatus.OK);
+        }catch (Exception e){
+            e.printStackTrace();
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+    }
+
     //Checked
     @RequestMapping(value="/download", method = RequestMethod.PUT)
     public ResponseEntity<CertificateExchangeDTO> downloadCertificate(@RequestBody CertificateExchangeDTO certificateExchangeDTO){

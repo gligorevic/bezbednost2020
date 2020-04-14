@@ -103,13 +103,6 @@ public class CertificateGenerator {
             JcaX509CertificateConverter certConverter = new JcaX509CertificateConverter();
             certConverter = certConverter.setProvider("BC");
 
-
-            /*ASN1Object asn1Object = ASN1OctetString.getInstance(certConverter.getCertificate(certHolder).getExtensionValue("2.5.29.16")).getLoadedObject();
-            ASN1EncodableVector v = new ASN1EncodableVector();
-            v.add(new DERTaggedObject(false, 0, new DEROctetString(ASN1OctetString.getInstance(certConverter.getCertificate(certHolder).getExtensionValue("2.5.29.16")))));
-            System.out.println(asn1Object.toString());
-            System.out.println(PrivateKeyUsagePeriod.getInstance(new DERSequence(v)));*/
-
             return certConverter.getCertificate(certHolder);
         } catch (Exception e) {
             e.printStackTrace();

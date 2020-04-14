@@ -150,6 +150,16 @@ public class AdminService {
         return null;
     }
 
+    public ArrayList<CertificateExchangeDTO> getAllRevocatedCerts() {
+        try{
+            ArrayList<CertificateExchangeDTO> retList = keyStoreService.findAllRevocatedCerts(Constants.keystoreFilePath, Constants.password);
+            return retList;
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public CertificateExchangeDTO downloadCertificate(CertificateExchangeDTO certificateExchangeDTO){
         try{
             System.out.println(certificateExchangeDTO.getName());
@@ -187,4 +197,6 @@ public class AdminService {
 
         return null;
     }
+
+
 }

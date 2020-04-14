@@ -12,6 +12,7 @@ import ChevronRightIcon from "@material-ui/icons/ChevronRight";
 import IconButton from "@material-ui/core/IconButton";
 import clsx from "clsx";
 import CertificatesList from "../Admin/CertificatesList";
+import RevocatedCertsList from "../Admin/RevocatedCertsList";
 import TabPanel from "../layouts/TabPanel";
 const drawerWidth = 240;
 
@@ -95,6 +96,7 @@ function ResponsiveDrawer(props) {
         aria-label="simple tabs example"
       >
         <Tab label="List of certificates" {...a11yProps(0)} />
+        <Tab label="Revocated certificates" {...a11yProps(1)} />
       </Tabs>
     </div>
   );
@@ -127,6 +129,9 @@ function ResponsiveDrawer(props) {
           <div className={classes.drawerHeader} />
           <TabPanel value={value} index={0}>
             {value === 0 && <CertificatesList />}
+          </TabPanel>
+          <TabPanel value={value} index={1}>
+            {value === 1 && <RevocatedCertsList />}
           </TabPanel>
         </main>
       </div>
