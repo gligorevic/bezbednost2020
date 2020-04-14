@@ -1,5 +1,6 @@
 package com.example.server.service;
 
+import com.example.server.Model.CertificateModel;
 import com.example.server.Repository.CertificateRepository;
 import com.example.server.dto.CertificateExchangeDTO;
 import org.bouncycastle.asn1.x500.RDN;
@@ -207,6 +208,39 @@ public class KeyStoreService {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public ArrayList<CertificateExchangeDTO> findAllRevocatedCerts(String filePath, String password) throws KeyStoreException, CertificateEncodingException {
+        KeyStore ks = getKeyStore(filePath, password);
+
+        ArrayList<CertificateExchangeDTO> certificateDTOList = new ArrayList<>();
+
+        Enumeration<String> aliases = ks.aliases();
+        while(aliases.hasMoreElements()) {
+            String entry = aliases.nextElement();
+            X509Certificate cert = (X509Certificate) ks.getCertificate(entry);
+
+
+            X500Name x500name = new JcaX509CertificateHolder(cert).getSubject();
+            RDN cn = x500name.getRDNs(BCStyle.CN)[0];
+            RDN org = x500name.getRDNs(BCStyle.O)[0];
+            RDN email = x500name.getRDNs(BCStyle.E)[0];
+            X500Name x500nameIssuer = new JcaX509CertificateHolder(cert).getIssuer();
+            RDN cnIssuer = x500nameIssuer.getRDNs(BCStyle.CN)[0];
+
+            if(!validateChain(ks.getCertificateChain(entry))) {
+
+                CertificateExchangeDTO certDto = new CertificateExchangeDTO(rdnToString(cn), rdnToString(org), rdnToString(email), rdnToString(cnIssuer), cert.getSerialNumber(), cert.getNotBefore(), cert.getNotAfter());
+                CertificateModel certModel = certificateRepository.getBySerialNumber(cert.getSerialNumber().toString());
+
+                if(certModel != null){
+                    certDto.setReason(certModel.getRevokeReason());
+                }
+
+                certificateDTOList.add(certDto);
+            }
+        }
+        return certificateDTOList;
     }
 
     public Certificate readCertificateBySerialNumber(KeyStore ks, String serialNumber) {

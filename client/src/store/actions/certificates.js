@@ -1,4 +1,8 @@
-import { SET_KEYUSAGES, SET_ALL_CERTIFICATES } from "../actionTypes";
+import {
+  SET_KEYUSAGES,
+  SET_ALL_CERTIFICATES,
+  SET_ALL_REVOCATED_CERTS,
+} from "../actionTypes";
 import axios from "axios";
 
 export const setKeyUsages = (keyUsages) => ({
@@ -9,6 +13,11 @@ export const setKeyUsages = (keyUsages) => ({
 export const setAllCertificates = (allCertificates) => ({
   type: SET_ALL_CERTIFICATES,
   allCertificates,
+});
+
+export const setAllRevocatedCerts = (allRevocatedCerts) => ({
+  type: SET_ALL_REVOCATED_CERTS,
+  allRevocatedCerts,
 });
 
 export const getAllKeyUsages = () => async (dispatch, getState) => {
@@ -31,6 +40,17 @@ export const getAllCertificates = () => async (dispatch) => {
   try {
     const allCertificates = await axios.get("/api/admin/getAllCerts");
     dispatch(setAllCertificates(allCertificates.data));
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+export const getAllRevocatedCerts = () => async (dispatch) => {
+  try {
+    const allRevocatedCerts = await axios.get(
+      "/api/admin/getAllRevocatedCerts"
+    );
+    dispatch(setAllRevocatedCerts(allRevocatedCerts.data));
   } catch (err) {
     console.log(err);
   }

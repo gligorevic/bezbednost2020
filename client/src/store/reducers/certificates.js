@@ -1,8 +1,13 @@
-import { SET_KEYUSAGES, SET_ALL_CERTIFICATES } from "../actionTypes";
+import {
+  SET_KEYUSAGES,
+  SET_ALL_CERTIFICATES,
+  SET_ALL_REVOCATED_CERTS,
+} from "../actionTypes";
 
 const DEFAULT_STATE = {
   keyUsages: null,
   allCertificates: null,
+  allRevocatedCerts: null,
 };
 
 export default (state = DEFAULT_STATE, action) => {
@@ -17,6 +22,12 @@ export default (state = DEFAULT_STATE, action) => {
       return {
         ...state,
         allCertificates: action.allCertificates,
+      };
+    }
+    case SET_ALL_REVOCATED_CERTS: {
+      return {
+        ...state,
+        allRevocatedCerts: action.allRevocatedCerts,
       };
     }
     default:
