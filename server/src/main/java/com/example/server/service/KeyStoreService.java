@@ -236,6 +236,9 @@ public class KeyStoreService {
                 if(certModel != null){
                     certDto.setReason(certModel.getRevokeReason());
                 }
+                else{
+                    certDto.setReason("An issuer has been revoked");
+                }
 
                 certificateDTOList.add(certDto);
             }
