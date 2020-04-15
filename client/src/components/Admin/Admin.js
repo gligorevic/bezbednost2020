@@ -103,13 +103,12 @@ export default function HorizontalLinearStepper() {
       countryOfState: "",
       country: "",
       mail: "",
-      notBefore: "",
-      notAfter: "",
     });
     setCertificate("");
     setActiveStep(0);
     setUsage([]);
     setGenerated(false);
+    setType(null);
   };
 
   function getStepContent(step) {

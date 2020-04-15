@@ -58,7 +58,7 @@ public class AppRunner implements ApplicationRunner {
                 keyStoreService.write(keyStore, "Security Admin", keyPair.getPrivate(), Constants.password.toCharArray(), cert, null);
                 keyStoreService.saveKeyStore(keyStore, Constants.keystoreFilePath, Constants.password.toCharArray());
 
-                Certificate certificate = keyStoreService.readCertificate(keyStore, "Security Admin");
+                Certificate certificate = keyStoreService.readCertificate(keyStore, cert.getSerialNumber() + "*" +"Security Admin");
                 X509Certificate c = (X509Certificate) certificate;
 
                 System.out.println("Issuer\n");
