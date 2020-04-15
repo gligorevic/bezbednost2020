@@ -124,13 +124,13 @@ public class KeyStoreService {
     public void write(KeyStore keyStore, String alias, PrivateKey privateKey, char[] password, Certificate certificate, X509Certificate issuer) {
         try {
             if(issuer == null) {
-                keyStore.setKeyEntry(alias, privateKey, password, new Certificate[] {certificate});
+                keyStore.setKeyEntry(((X509Certificate)certificate).getSerialNumber() + "*" + alias, privateKey, password, new Certificate[] {certificate});
             } else {
                 Certificate[] certificates = getCertificateChain(issuer.getSerialNumber().toString(), certificate, keyStore);
                 for(Certificate c : certificates) {
                     System.out.println(((X509Certificate)c).getSubjectX500Principal());
                 }
-                keyStore.setKeyEntry(alias, privateKey, password, certificates);
+                keyStore.setKeyEntry(((X509Certificate)certificate).getSerialNumber() + "*" + alias, privateKey, password, certificates);
             }
 
         } catch (KeyStoreException e) {
