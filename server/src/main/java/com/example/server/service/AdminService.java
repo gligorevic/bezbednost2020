@@ -48,7 +48,7 @@ public class AdminService {
     //Checked  Dodati opciono generisanje vise root sertifikata
     public CertificateDTO createCertificate(CertificateDTO certificateDTO) throws Exception {
 
-        KeyStore keyStore = keyStoreService.getKeyStore(Constants.keystoreFilePath, Constants.password);
+        KeyStore keyStore;
 
         KeyPair keyPair = CertificateGenerator.generateKeyPair();
         SubjectData subjectData = CertificateGenerator.generateSubjectData(certificateDTO.getCommonName(),certificateDTO.getOrganization(), certificateDTO.getOrganizationalUnit(), certificateDTO.getCity(), certificateDTO.getMail(), certificateDTO.getNotBefore(), certificateDTO.getNotAfter(), keyPair);
@@ -56,6 +56,7 @@ public class AdminService {
         X509Certificate issuerCert;
 
         if(certificateDTO.getIssuer() == null){
+            keyStore = keyStoreService.getKeyStore(Constants.keystoreFilePathRoot, Constants.password);
             System.out.println("Pravi se root sertifikat");
             IssuerData issuerData = CertificateGenerator.generateIssuerData(certificateDTO.getCommonName(),certificateDTO.getOrganization(), certificateDTO.getOrganizationalUnit(), certificateDTO.getCity(), certificateDTO.getMail(), keyPair.getPrivate(), IETFUtils.valueToString(subjectData.getX500name().getRDNs(BCStyle.UID)[0].getFirst().getValue()));
 
@@ -63,9 +64,9 @@ public class AdminService {
             X509Certificate cert = cg.generateCertificate(subjectData, issuerData, BigInteger.valueOf(keyStore.size()), new KeyUsages[]{KeyUsages.KEY_CERT_SIGN, KeyUsages.CRL_SIGN }, certificateDTO.getNotBefore(), certificateDTO.getNotAfter());
 
             keyStoreService.write(keyStore, certificateDTO.getCommonName(), keyPair.getPrivate(), Constants.password.toCharArray(), cert, null);
-            keyStoreService.saveKeyStore(keyStore, Constants.keystoreFilePath, Constants.password.toCharArray());
+            keyStoreService.saveKeyStore(keyStore, Constants.keystoreFilePathRoot, Constants.password.toCharArray());
 
-            Certificate certificate = keyStoreService.readCertificate(keyStore, cert.getSerialNumber() + "*" +certificateDTO.getCommonName());
+            Certificate certificate = keyStoreService.readCertificate(cert.getSerialNumber() + "*" +certificateDTO.getCommonName());
             X509Certificate c = (X509Certificate) certificate;
 
             System.out.println("================================================");
@@ -78,7 +79,7 @@ public class AdminService {
             System.out.println("===============================================");
             return certificateDTO;
         }else{
-            issuerCert = (X509Certificate) keyStoreService.readCertificateBySerialNumber(keyStore, certificateDTO.getIssuer());
+            issuerCert = (X509Certificate) keyStoreService.readCertificateBySerialNumber(certificateDTO.getIssuer());
 
             if(!certificateService.checkPrivateKeyDuration(issuerCert)) {
                 throw new Exception("Issuer private key is not active");
@@ -95,7 +96,7 @@ public class AdminService {
         RDN city = x500name.getRDNs(BCStyle.C)[0];
         RDN uid = x500name.getRDNs(BCStyle.UID)[0];
 
-        IssuerData issuerData = CertificateGenerator.generateIssuerData(rdnToString(cn), rdnToString(org),rdnToString(ou),rdnToString(city),rdnToString(email), keyStoreService.getPrivateKey(keyStore, issuerCert.getSerialNumber() + "*" + rdnToString(cn), Constants.password), rdnToString(uid));
+        IssuerData issuerData = CertificateGenerator.generateIssuerData(rdnToString(cn), rdnToString(org),rdnToString(ou),rdnToString(city),rdnToString(email), keyStoreService.getPrivateKey(issuerCert.getSerialNumber() + "*" + rdnToString(cn), Constants.password), rdnToString(uid));
 
         //provera da li se vreme validnosti sertifikata nalazi u okviru vremena validnosti issuer-a
         if(certificateDTO.getNotAfter().after(issuerCert.getNotAfter()) || certificateDTO.getNotBefore().before(issuerCert.getNotBefore()) || certificateDTO.getNotAfter().before(new Date())){
@@ -103,12 +104,18 @@ public class AdminService {
         }
         CertificateGenerator cg = new CertificateGenerator();
         X509Certificate cert = cg.generateCertificate(subjectData, issuerData, issuerCertSN, certificateDTO.getKeyUsages(), certificateDTO.getNotBefore(), certificateDTO.getNotAfter());
-
-
+        String path = "";
+        //budz- proveriti da li je dovoljno da se proveri samo keyUsage[5] ili bi trebalo jos nesto da se proveri
+        if(cert.getKeyUsage()[5]){
+            path = Constants.keystoreFilePathCA;
+        }else {
+            path = Constants.keystoreFilePathEnd;
+        }
+        keyStore = keyStoreService.getKeyStore(path, Constants.password);
         keyStoreService.write(keyStore, certificateDTO.getCommonName(), keyPair.getPrivate(), Constants.password.toCharArray(), cert, issuerCert);
-        keyStoreService.saveKeyStore(keyStore, Constants.keystoreFilePath, Constants.password.toCharArray());
+        keyStoreService.saveKeyStore(keyStore, path, Constants.password.toCharArray());
 
-        Certificate certificate = keyStoreService.readCertificate(keyStore, cert.getSerialNumber() + "*" +certificateDTO.getCommonName());
+        Certificate certificate = keyStoreService.readCertificate(cert.getSerialNumber() + "*" +certificateDTO.getCommonName());
         X509Certificate c = (X509Certificate) certificate;
 
         System.out.println("Issuer\n");
@@ -128,9 +135,7 @@ public class AdminService {
 
     public ArrayList<CertificateExchangeDTO> getCACerts() {
         try {
-            KeyStore keystore = keyStoreService.getKeyStore(Constants.keystoreFilePath, Constants.password);
-
-            return keyStoreService.findCACerts(keystore);
+            return keyStoreService.findCACerts();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -142,7 +147,8 @@ public class AdminService {
     @Scheduled(cron = "0 0 0 * * *")
     public ArrayList<CertificateExchangeDTO> getAllCerts(){
         try{
-            ArrayList<CertificateExchangeDTO> retList = certificateService.certificateCheckDate(keyStoreService.findAllValidCerts(Constants.keystoreFilePath, Constants.password));
+            String[] paths = {Constants.keystoreFilePathRoot, Constants.keystoreFilePathCA, Constants.keystoreFilePathEnd};
+            ArrayList<CertificateExchangeDTO> retList = certificateService.certificateCheckDate(keyStoreService.findAllValidCerts(paths, Constants.password));
             return retList;
         }catch (Exception e){
             e.printStackTrace();
@@ -152,7 +158,8 @@ public class AdminService {
 
     public ArrayList<CertificateExchangeDTO> getAllRevocatedCerts() {
         try{
-            ArrayList<CertificateExchangeDTO> retList = keyStoreService.findAllRevocatedCerts(Constants.keystoreFilePath, Constants.password);
+            String[] paths = {Constants.keystoreFilePathRoot, Constants.keystoreFilePathCA, Constants.keystoreFilePathEnd};
+            ArrayList<CertificateExchangeDTO> retList = keyStoreService.findAllRevocatedCerts(paths, Constants.password);
             return retList;
         }catch (Exception e){
             e.printStackTrace();
@@ -163,10 +170,7 @@ public class AdminService {
     public CertificateExchangeDTO downloadCertificate(CertificateExchangeDTO certificateExchangeDTO){
         try{
             System.out.println(certificateExchangeDTO.getName());
-            KeyStore keyStore = keyStoreService.getKeyStore(Constants.keystoreFilePath, Constants.password);
-
-            Certificate certificate = keyStoreService.readCertificate(keyStore,  certificateExchangeDTO.getSerialNumber() + "*" + certificateExchangeDTO.getName());
-
+            Certificate certificate = keyStoreService.readCertificate(certificateExchangeDTO.getSerialNumber() + "*" + certificateExchangeDTO.getName());
             String path = System.getProperty("user.home") + "/Downloads/";
 
             FileOutputStream os = new FileOutputStream(path + certificateExchangeDTO.getName() + ".cer");
@@ -181,9 +185,7 @@ public class AdminService {
 
     public CertificateExchangeDTO revokeCertificate(CertificateExchangeDTO certificateExchangeDTO, String reason) {
         try{
-            KeyStore keyStore = keyStoreService.getKeyStore(Constants.keystoreFilePath, Constants.password);
-
-            Certificate certificate = keyStoreService.readCertificate(keyStore, certificateExchangeDTO.getSerialNumber() + "*" + certificateExchangeDTO.getName());
+            Certificate certificate = keyStoreService.readCertificate( certificateExchangeDTO.getSerialNumber() + "*" + certificateExchangeDTO.getName());
             X509Certificate x509Certificate = (X509Certificate) certificate;
             CertificateModel certificateModel = certificateService.revokeCertificate(x509Certificate, reason);
 

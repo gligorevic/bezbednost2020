@@ -2,6 +2,7 @@ package com.example.server.service;
 
 import com.example.server.Model.CertificateModel;
 import com.example.server.Repository.CertificateRepository;
+import com.example.server.certificates.Constants;
 import com.example.server.dto.CertificateExchangeDTO;
 import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -52,26 +53,31 @@ public class KeyStoreService {
     }
 
 
-    public ArrayList<CertificateExchangeDTO> findAllValidCerts(String filePath, String password) throws KeyStoreException, CertificateEncodingException {
-        KeyStore ks = getKeyStore(filePath, password);
+    public ArrayList<CertificateExchangeDTO> findAllValidCerts(String[] filePath, String password) throws KeyStoreException, CertificateEncodingException {
+        List<KeyStore> keyStores = new ArrayList<>();
+        for(String s: filePath){
+            keyStores.add(getKeyStore(s, password));
+        }
+
 
         ArrayList<CertificateExchangeDTO> certificateDTOList = new ArrayList<>();
+        for(KeyStore ks : keyStores) {
+            Enumeration<String> aliases = ks.aliases();
+            while (aliases.hasMoreElements()) {
+                String entry = aliases.nextElement();
+                X509Certificate cert = (X509Certificate) ks.getCertificate(entry);
 
-        Enumeration<String> aliases = ks.aliases();
-        while(aliases.hasMoreElements()) {
-            String entry = aliases.nextElement();
-            X509Certificate cert = (X509Certificate) ks.getCertificate(entry);
 
+                X500Name x500name = new JcaX509CertificateHolder(cert).getSubject();
+                RDN cn = x500name.getRDNs(BCStyle.CN)[0];
+                RDN org = x500name.getRDNs(BCStyle.O)[0];
+                RDN email = x500name.getRDNs(BCStyle.E)[0];
+                X500Name x500nameIssuer = new JcaX509CertificateHolder(cert).getIssuer();
+                RDN cnIssuer = x500nameIssuer.getRDNs(BCStyle.CN)[0];
 
-            X500Name x500name = new JcaX509CertificateHolder(cert).getSubject();
-            RDN cn = x500name.getRDNs(BCStyle.CN)[0];
-            RDN org = x500name.getRDNs(BCStyle.O)[0];
-            RDN email = x500name.getRDNs(BCStyle.E)[0];
-            X500Name x500nameIssuer = new JcaX509CertificateHolder(cert).getIssuer();
-            RDN cnIssuer = x500nameIssuer.getRDNs(BCStyle.CN)[0];
-
-            if(validateChain(ks.getCertificateChain(entry))) {
-                certificateDTOList.add(new CertificateExchangeDTO(rdnToString(cn), rdnToString(org), rdnToString(email), rdnToString(cnIssuer), cert.getSerialNumber(), cert.getNotBefore(), cert.getNotAfter()));
+                if (validateChain(ks.getCertificateChain(entry))) {
+                    certificateDTOList.add(new CertificateExchangeDTO(rdnToString(cn), rdnToString(org), rdnToString(email), rdnToString(cnIssuer), cert.getSerialNumber(), cert.getNotBefore(), cert.getNotAfter()));
+                }
             }
         }
         return certificateDTOList;
@@ -126,7 +132,8 @@ public class KeyStoreService {
             if(issuer == null) {
                 keyStore.setKeyEntry(((X509Certificate)certificate).getSerialNumber() + "*" + alias, privateKey, password, new Certificate[] {certificate});
             } else {
-                Certificate[] certificates = getCertificateChain(issuer.getSerialNumber().toString(), certificate, keyStore);
+                KeyStore ks = getKeyStoreBySerialNumber(issuer.getSerialNumber().toString());
+                Certificate[] certificates = getCertificateChain(issuer.getSerialNumber().toString(), certificate, ks);
                 for(Certificate c : certificates) {
                     System.out.println(((X509Certificate)c).getSubjectX500Principal());
                 }
@@ -177,11 +184,17 @@ public class KeyStoreService {
 
     // ------------------------------------------ READER ---------------------------------------------------
 
-    public Certificate readCertificate(KeyStore ks, String alias) {
+    public Certificate readCertificate( String alias) {
         try {
-            if(ks.isKeyEntry(alias)) {
-                Certificate cert = ks.getCertificate(alias);
-                return cert;
+            List<KeyStore> keyStores = new ArrayList<>();
+            keyStores.add(getKeyStore(Constants.keystoreFilePathRoot, Constants.password));
+            keyStores.add(getKeyStore(Constants.keystoreFilePathCA, Constants.password));
+            keyStores.add(getKeyStore(Constants.keystoreFilePathEnd, Constants.password));
+            for(KeyStore ks : keyStores) {
+                if (ks.isKeyEntry(alias)) {
+                    Certificate cert = ks.getCertificate(alias);
+                    return cert;
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -210,89 +223,128 @@ public class KeyStoreService {
         return null;
     }
 
-    public ArrayList<CertificateExchangeDTO> findAllRevocatedCerts(String filePath, String password) throws KeyStoreException, CertificateEncodingException {
-        KeyStore ks = getKeyStore(filePath, password);
+    public ArrayList<CertificateExchangeDTO> findAllRevocatedCerts(String[] filePath, String password) throws KeyStoreException, CertificateEncodingException {
+        List<KeyStore> keyStores = new ArrayList<>();
+        for(String s: filePath){
+            keyStores.add(getKeyStore(s, password));
+        }
 
         ArrayList<CertificateExchangeDTO> certificateDTOList = new ArrayList<>();
-
-        Enumeration<String> aliases = ks.aliases();
-        while(aliases.hasMoreElements()) {
-            String entry = aliases.nextElement();
-            X509Certificate cert = (X509Certificate) ks.getCertificate(entry);
-
-
-            X500Name x500name = new JcaX509CertificateHolder(cert).getSubject();
-            RDN cn = x500name.getRDNs(BCStyle.CN)[0];
-            RDN org = x500name.getRDNs(BCStyle.O)[0];
-            RDN email = x500name.getRDNs(BCStyle.E)[0];
-            X500Name x500nameIssuer = new JcaX509CertificateHolder(cert).getIssuer();
-            RDN cnIssuer = x500nameIssuer.getRDNs(BCStyle.CN)[0];
-
-            if(!validateChain(ks.getCertificateChain(entry))) {
-
-                CertificateExchangeDTO certDto = new CertificateExchangeDTO(rdnToString(cn), rdnToString(org), rdnToString(email), rdnToString(cnIssuer), cert.getSerialNumber(), cert.getNotBefore(), cert.getNotAfter());
-                CertificateModel certModel = certificateRepository.getBySerialNumber(cert.getSerialNumber().toString());
-
-                if(certModel != null){
-                    certDto.setReason(certModel.getRevokeReason());
-                }
-                else{
-                    certDto.setReason("An issuer has been revoked");
-                }
-
-                certificateDTOList.add(certDto);
-            }
-        }
-        return certificateDTOList;
-    }
-
-    public Certificate readCertificateBySerialNumber(KeyStore ks, String serialNumber) {
-        try {
+        for(KeyStore ks : keyStores) {
             Enumeration<String> aliases = ks.aliases();
-            while(aliases.hasMoreElements()) {
+            while (aliases.hasMoreElements()) {
                 String entry = aliases.nextElement();
                 X509Certificate cert = (X509Certificate) ks.getCertificate(entry);
-                if(cert.getSerialNumber().toString().equals(serialNumber)) {
-                    return ks.getCertificate(entry);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
 
-    public PrivateKey getPrivateKey(KeyStore keyStore, String alias, String password) {
-        try {
-            if(keyStore.isKeyEntry(alias)) {
-                return (PrivateKey) keyStore.getKey(alias, password.toCharArray());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
 
-    public ArrayList<CertificateExchangeDTO> findCACerts(KeyStore ks) throws KeyStoreException, CertificateEncodingException {
-        ArrayList<CertificateExchangeDTO> certificateDTOList = new ArrayList<>();
-        Enumeration<String> aliases = ks.aliases();
-        while(aliases.hasMoreElements()) {
-            String entry = aliases.nextElement();
-            X509Certificate cert = (X509Certificate) ks.getCertificate(entry);
-
-            if(cert.getKeyUsage()[5] && certificateService.checkPrivateKeyDuration(cert) && validateChain(ks.getCertificateChain(entry))) {
                 X500Name x500name = new JcaX509CertificateHolder(cert).getSubject();
                 RDN cn = x500name.getRDNs(BCStyle.CN)[0];
                 RDN org = x500name.getRDNs(BCStyle.O)[0];
                 RDN email = x500name.getRDNs(BCStyle.E)[0];
-
                 X500Name x500nameIssuer = new JcaX509CertificateHolder(cert).getIssuer();
                 RDN cnIssuer = x500nameIssuer.getRDNs(BCStyle.CN)[0];
-                certificateDTOList.add(new CertificateExchangeDTO(IETFUtils.valueToString(cn.getFirst().getValue()), IETFUtils.valueToString(org.getFirst().getValue()), IETFUtils.valueToString(email.getFirst().getValue()), IETFUtils.valueToString(cnIssuer.getFirst().getValue()), cert.getSerialNumber(), cert.getNotBefore(), cert.getNotAfter()));
+
+                if (!validateChain(ks.getCertificateChain(entry))) {
+
+                    CertificateExchangeDTO certDto = new CertificateExchangeDTO(rdnToString(cn), rdnToString(org), rdnToString(email), rdnToString(cnIssuer), cert.getSerialNumber(), cert.getNotBefore(), cert.getNotAfter());
+                    CertificateModel certModel = certificateRepository.getBySerialNumber(cert.getSerialNumber().toString());
+
+                    if (certModel != null) {
+                        certDto.setReason(certModel.getRevokeReason());
+                    } else {
+                        certDto.setReason("An issuer has been revoked");
+                    }
+
+                    certificateDTOList.add(certDto);
+                }
             }
         }
         return certificateDTOList;
     }
 
+
+
+    public Certificate readCertificateBySerialNumber(String serialNumber) {
+        try {
+            List<KeyStore> keyStores = new ArrayList<>();
+            keyStores.add(getKeyStore(Constants.keystoreFilePathRoot, Constants.password));
+            keyStores.add(getKeyStore(Constants.keystoreFilePathCA, Constants.password));
+            keyStores.add(getKeyStore(Constants.keystoreFilePathEnd, Constants.password));
+            for(KeyStore ks : keyStores) {
+                Enumeration<String> aliases = ks.aliases();
+                while (aliases.hasMoreElements()) {
+                    String entry = aliases.nextElement();
+                    X509Certificate cert = (X509Certificate) ks.getCertificate(entry);
+                    if (cert.getSerialNumber().toString().equals(serialNumber)) {
+                        return ks.getCertificate(entry);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public PrivateKey getPrivateKey(String alias, String password) {
+        try {
+            List<KeyStore> keyStores = new ArrayList<>();
+            keyStores.add(getKeyStore(Constants.keystoreFilePathRoot, Constants.password));
+            keyStores.add(getKeyStore(Constants.keystoreFilePathCA, Constants.password));
+            keyStores.add(getKeyStore(Constants.keystoreFilePathEnd, Constants.password));
+            for(KeyStore keyStore: keyStores) {
+                if (keyStore.isKeyEntry(alias)) {
+                    return (PrivateKey) keyStore.getKey(alias, password.toCharArray());
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public ArrayList<CertificateExchangeDTO> findCACerts() throws KeyStoreException, CertificateEncodingException {
+        List<KeyStore> keyStores = new ArrayList<>();
+        keyStores.add(getKeyStore(Constants.keystoreFilePathRoot, Constants.password));
+        keyStores.add(getKeyStore(Constants.keystoreFilePathCA, Constants.password));
+        ArrayList<CertificateExchangeDTO> certificateDTOList = new ArrayList<>();
+        for(KeyStore ks :keyStores) {
+            Enumeration<String> aliases = ks.aliases();
+            while (aliases.hasMoreElements()) {
+                String entry = aliases.nextElement();
+                X509Certificate cert = (X509Certificate) ks.getCertificate(entry);
+                //budz- proveriti da li je dovoljno da se proveri samo keyUsage[5] ili bi trebalo jos nesto da se proveri
+                if (cert.getKeyUsage()[5] && certificateService.checkPrivateKeyDuration(cert) && validateChain(ks.getCertificateChain(entry))) {
+                    X500Name x500name = new JcaX509CertificateHolder(cert).getSubject();
+                    RDN cn = x500name.getRDNs(BCStyle.CN)[0];
+                    RDN org = x500name.getRDNs(BCStyle.O)[0];
+                    RDN email = x500name.getRDNs(BCStyle.E)[0];
+
+                    X500Name x500nameIssuer = new JcaX509CertificateHolder(cert).getIssuer();
+                    RDN cnIssuer = x500nameIssuer.getRDNs(BCStyle.CN)[0];
+                    certificateDTOList.add(new CertificateExchangeDTO(IETFUtils.valueToString(cn.getFirst().getValue()), IETFUtils.valueToString(org.getFirst().getValue()), IETFUtils.valueToString(email.getFirst().getValue()), IETFUtils.valueToString(cnIssuer.getFirst().getValue()), cert.getSerialNumber(), cert.getNotBefore(), cert.getNotAfter()));
+                }
+            }
+        }
+        return certificateDTOList;
+    }
+
+    private KeyStore getKeyStoreBySerialNumber(String serialNumber) throws KeyStoreException {
+        List<KeyStore> keyStores = new ArrayList<>();
+        keyStores.add(getKeyStore(Constants.keystoreFilePathRoot, Constants.password));
+        keyStores.add(getKeyStore(Constants.keystoreFilePathCA, Constants.password));
+        keyStores.add(getKeyStore(Constants.keystoreFilePathEnd, Constants.password));
+        for(KeyStore ks : keyStores) {
+            Enumeration<String> aliases = ks.aliases();
+            while (aliases.hasMoreElements()) {
+                String entry = aliases.nextElement();
+                X509Certificate cert = (X509Certificate) ks.getCertificate(entry);
+                if (cert.getSerialNumber().toString().equals(serialNumber)) {
+                    return ks;
+                }
+            }
+        }
+        return null;
+    }
 
 }

@@ -37,12 +37,13 @@ public class AppRunner implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
 
-        File f = new File(Constants.keystoreFilePath);
+        File f = new File(Constants.keystoreFilePathRoot);
 
         if(!f.exists()) {
             System.out.println("Ne postoji keystore");
             KeyStore keyStore = keyStoreService.getKeyStore(null, Constants.password);
-
+            KeyStore keyStoreCA = keyStoreService.getKeyStore(null, Constants.password);
+            KeyStore keyStoreEnd = keyStoreService.getKeyStore(null, Constants.password);
             try {
                 Calendar calendar = Calendar.getInstance();
                 calendar.setTime(new Date());
@@ -56,9 +57,10 @@ public class AppRunner implements ApplicationRunner {
                 X509Certificate cert = cg.generateCertificate(subjectData, issuerData, BigInteger.ZERO, new KeyUsages[]{KeyUsages.KEY_CERT_SIGN, KeyUsages.CRL_SIGN }, new Date(), calendar.getTime());
 
                 keyStoreService.write(keyStore, "Security Admin", keyPair.getPrivate(), Constants.password.toCharArray(), cert, null);
-                keyStoreService.saveKeyStore(keyStore, Constants.keystoreFilePath, Constants.password.toCharArray());
-
-                Certificate certificate = keyStoreService.readCertificate(keyStore, cert.getSerialNumber() + "*" +"Security Admin");
+                keyStoreService.saveKeyStore(keyStore, Constants.keystoreFilePathRoot, Constants.password.toCharArray());
+                keyStoreService.saveKeyStore(keyStoreCA, Constants.keystoreFilePathCA, Constants.password.toCharArray());
+                keyStoreService.saveKeyStore(keyStoreEnd, Constants.keystoreFilePathEnd, Constants.password.toCharArray());
+                Certificate certificate = keyStoreService.readCertificate( cert.getSerialNumber() + "*" +"Security Admin");
                 X509Certificate c = (X509Certificate) certificate;
 
                 System.out.println("Issuer\n");
@@ -77,9 +79,14 @@ public class AppRunner implements ApplicationRunner {
             System.out.println("Postoji");
 
             try {
-                KeyStore keyStore = keyStoreService.getKeyStore(Constants.keystoreFilePath, Constants.password);
-
+                KeyStore keyStore = keyStoreService.getKeyStore(Constants.keystoreFilePathRoot, Constants.password);
+                KeyStore keyStoreCA = keyStoreService.getKeyStore(Constants.keystoreFilePathCA, Constants.password);
+                KeyStore keyStoreEnd  = keyStoreService.getKeyStore(Constants.keystoreFilePathEnd, Constants.password);
                 ArrayList<Certificate> list = keyStoreService.findAllCertificates(keyStore);
+                ArrayList<Certificate> listCA = keyStoreService.findAllCertificates(keyStoreCA);
+                ArrayList<Certificate> listEnd = keyStoreService.findAllCertificates(keyStoreEnd);
+                list.addAll(listCA);
+                list.addAll(listEnd);
                 CertificateGenerator.serialNumber = list.size();
                 for(Certificate certificate: list){
                     X509Certificate c = (X509Certificate) certificate;
