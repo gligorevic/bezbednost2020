@@ -200,5 +200,19 @@ public class AdminService {
         return null;
     }
 
+    public CertificateExchangeDTO checkValidity(CertificateExchangeDTO certificateExchangeDTO){
+        try{
+            System.out.println(certificateExchangeDTO.getName());
+            Certificate certificate = keyStoreService.readCertificate(certificateExchangeDTO.getSerialNumber() + "*" + certificateExchangeDTO.getName());
+            KeyStore ks = keyStoreService.getKeyStoreBySerialNumber(String.valueOf(certificateExchangeDTO.getSerialNumber()));
+            if(keyStoreService.validateChain(ks.getCertificateChain(certificateExchangeDTO.getSerialNumber() + "*" + certificateExchangeDTO.getName()))){
+                return certificateExchangeDTO;
+            }
+            return certificateExchangeDTO;
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        return null;
+    }
 
 }

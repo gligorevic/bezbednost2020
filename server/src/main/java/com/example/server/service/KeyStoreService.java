@@ -329,7 +329,7 @@ public class KeyStoreService {
         return certificateDTOList;
     }
 
-    private KeyStore getKeyStoreBySerialNumber(String serialNumber) throws KeyStoreException {
+    public KeyStore getKeyStoreBySerialNumber(String serialNumber) throws KeyStoreException {
         List<KeyStore> keyStores = new ArrayList<>();
         keyStores.add(getKeyStore(Constants.keystoreFilePathRoot, Constants.password));
         keyStores.add(getKeyStore(Constants.keystoreFilePathCA, Constants.password));
