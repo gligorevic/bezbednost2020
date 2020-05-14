@@ -46,10 +46,10 @@ public class AdminController {
     }
 
     //Checked
-    @RequestMapping(value="/getAllIssuerCerts", method = RequestMethod.GET)
-    public ResponseEntity<ArrayList<CertificateExchangeDTO>> getAllIssuerCerts() {
+    @RequestMapping(value="/getAllIssuerCerts", method = RequestMethod.PUT)
+    public ResponseEntity<ArrayList<CertificateExchangeDTO>> getAllIssuerCerts(@RequestBody KeyUsages[] keyUsages) {
         try {
-            return new ResponseEntity<>(adminService.getCACerts(), HttpStatus.OK);
+            return new ResponseEntity<>(adminService.getCACerts( keyUsages), HttpStatus.OK);
         }catch (Exception e){
             e.printStackTrace();
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
@@ -110,4 +110,19 @@ public class AdminController {
         return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
     }
 
+    @RequestMapping(value = "/check", method = RequestMethod.PUT)
+    public ResponseEntity<CertificateExchangeDTO> checkValidity(@RequestBody CertificateExchangeDTO certificateExchangeDTO){
+        try{
+            CertificateExchangeDTO c = adminService.checkValidity(certificateExchangeDTO);
+            if(c!= null){
+                return new ResponseEntity<CertificateExchangeDTO>(c, HttpStatus.OK);
+            }else{
+                return new ResponseEntity<>(null, HttpStatus.CONFLICT);
+            }
+
+        }catch (Exception e){
+            e.printStackTrace();
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+    }
 }

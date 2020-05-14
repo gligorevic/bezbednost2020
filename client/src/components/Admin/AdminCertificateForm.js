@@ -56,6 +56,8 @@ const AdminCertificateForm = ({
       ["CRL_SIGN", true],
       ["DIGITAL_SIGNATURE", true],
       ["KEY_CERT_SIGN", true],
+      ["KEY_ENCIPHERMENT", true],
+      ["KEY_AGREEMENT", true],
     ]),
     endEntity: new Map([
       ["DIGITAL_SIGNATURE", true],
@@ -66,6 +68,7 @@ const AdminCertificateForm = ({
       ["KEY_CERT_SIGN", true],
       ["DIGITAL_SIGNATURE", true],
       ["KEY_ENCIPHERMENT", true],
+      ["KEY_AGREEMENT", true],
     ]),
   };
 

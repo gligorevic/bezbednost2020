@@ -87,6 +87,8 @@ const CertificatesList = ({ getAllCertificates, certificates, history }) => {
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [revokeReason, setRevokeReason] = React.useState("");
   const [certificateToRevoke, setCertificateToRevoke] = React.useState(null);
+  const [openValid, setOpenValid] = React.useState(false);
+  const [openNotValid, setOpenNotValid] = React.useState(false);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -123,6 +125,14 @@ const CertificatesList = ({ getAllCertificates, certificates, history }) => {
     setOpenDialog(false);
   };
 
+  const handleCloseValid = () => {
+    setOpenValid(false);
+  };
+
+  const handleCloseNotValid = () => {
+    setOpenNotValid(false);
+  };
+
   const handleRevoke = async () => {
     const resp = await Axios.put(
       `/api/admin/revokeCertificate/${revokeReason}`,
@@ -131,6 +141,17 @@ const CertificatesList = ({ getAllCertificates, certificates, history }) => {
     if (resp.status === 200) {
       setOpenDialog(false);
       getAllCertificates();
+    }
+  };
+
+  const handleChecking = async (e, row) => {
+    setLoading(true);
+    const resp = await Axios.put(`/api/admin/check`, row);
+    setLoading(false);
+    if (resp.status === 200) {
+      setOpenValid(true);
+    } else if (resp.status === 409) {
+      setOpenNotValid(true);
     }
   };
 
@@ -261,6 +282,7 @@ const CertificatesList = ({ getAllCertificates, certificates, history }) => {
                     </TableCell>
                     <TableCell></TableCell>
                     <TableCell></TableCell>
+                    <TableCell></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -317,6 +339,17 @@ const CertificatesList = ({ getAllCertificates, certificates, history }) => {
                                   }
                                 >
                                   Revocate
+                                </Button>
+                              </TableCell>
+                              <TableCell align="right">
+                                <Button
+                                  variant="outlined"
+                                  color="secondary"
+                                  onClick={(event) =>
+                                    handleChecking(event, row)
+                                  }
+                                >
+                                  Check validity
                                 </Button>
                               </TableCell>
                             </TableRow>
@@ -423,6 +456,40 @@ const CertificatesList = ({ getAllCertificates, certificates, history }) => {
               color="primary"
             >
               Agree
+            </Button>
+          </DialogActions>
+        </Dialog>
+        <Dialog
+          open={openValid}
+          TransitionComponent={Transition}
+          keepMounted
+          onClose={handleCloseValid}
+          aria-labelledby="alert-dialog-slide-title"
+          aria-describedby="alert-dialog-slide-description"
+        >
+          <DialogContent>
+            <Alert severity="success">Certificate is valid.</Alert>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseValid} color="primary">
+              Ok
+            </Button>
+          </DialogActions>
+        </Dialog>
+        <Dialog
+          open={openNotValid}
+          TransitionComponent={Transition}
+          keepMounted
+          onClose={handleCloseNotValid}
+          aria-labelledby="alert-dialog-slide-title"
+          aria-describedby="alert-dialog-slide-description"
+        >
+          <DialogContent>
+            <Alert severity="error">Certificate is not valid.</Alert>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseNotValid} color="primary">
+              Ok
             </Button>
           </DialogActions>
         </Dialog>
