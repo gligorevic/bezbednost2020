@@ -36,6 +36,7 @@ export default function CertificateSelect({
   setCertificate,
   changeMaxDate,
   changeMinDate,
+  usages,
 }) {
   const classes = useStyles();
 
@@ -43,7 +44,7 @@ export default function CertificateSelect({
 
   useEffect(() => {
     (async () => {
-      const resp = await axios.get("/api/admin/getAllIssuerCerts");
+      const resp = await axios.put(`/api/admin/getAllIssuerCerts`, usages);
       setIssuerCerts(resp.data);
     })();
   }, []);

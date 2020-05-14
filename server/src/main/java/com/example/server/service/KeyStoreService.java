@@ -2,17 +2,21 @@ package com.example.server.service;
 
 import com.example.server.Model.CertificateModel;
 import com.example.server.Repository.CertificateRepository;
+import com.example.server.certificates.CertificateGenerator;
 import com.example.server.certificates.Constants;
 import com.example.server.dto.CertificateExchangeDTO;
+import com.example.server.enumeration.KeyUsages;
 import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x500.style.IETFUtils;
+import org.bouncycastle.asn1.x509.KeyUsage;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
+import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.PrivateKey;
@@ -23,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
+
 
 @Service
 public class KeyStoreService {
@@ -303,7 +308,7 @@ public class KeyStoreService {
         return null;
     }
 
-    public ArrayList<CertificateExchangeDTO> findCACerts() throws KeyStoreException, CertificateEncodingException {
+    public ArrayList<CertificateExchangeDTO> findCACerts(KeyUsages[] keyUsages) throws Exception {
         List<KeyStore> keyStores = new ArrayList<>();
         keyStores.add(getKeyStore(Constants.keystoreFilePathRoot, Constants.password));
         keyStores.add(getKeyStore(Constants.keystoreFilePathCA, Constants.password));
@@ -313,8 +318,21 @@ public class KeyStoreService {
             while (aliases.hasMoreElements()) {
                 String entry = aliases.nextElement();
                 X509Certificate cert = (X509Certificate) ks.getCertificate(entry);
+                boolean flag = true;
+
+                for(boolean b : cert.getKeyUsage()){
+                    System.out.println(b);
+                }
+                System.out.println();
+                for(KeyUsages keyUsage: keyUsages){
+                    System.out.println(KeyUsages.valueOf(keyUsage.toString()).ordinal());
+                    if(!cert.getKeyUsage()[KeyUsages.valueOf(keyUsage.toString()).ordinal()]){
+                        flag = false;
+                        break;
+                    }
+                }
                 //budz- proveriti da li je dovoljno da se proveri samo keyUsage[5] ili bi trebalo jos nesto da se proveri
-                if (cert.getKeyUsage()[5] && certificateService.checkPrivateKeyDuration(cert) && validateChain(ks.getCertificateChain(entry))) {
+                if (cert.getKeyUsage()[5] && certificateService.checkPrivateKeyDuration(cert) && validateChain(ks.getCertificateChain(entry)) && flag) {
                     X500Name x500name = new JcaX509CertificateHolder(cert).getSubject();
                     RDN cn = x500name.getRDNs(BCStyle.CN)[0];
                     RDN org = x500name.getRDNs(BCStyle.O)[0];

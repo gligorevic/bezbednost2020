@@ -133,9 +133,9 @@ public class AdminService {
         return IETFUtils.valueToString(rdn.getFirst().getValue());
     }
 
-    public ArrayList<CertificateExchangeDTO> getCACerts() {
+    public ArrayList<CertificateExchangeDTO> getCACerts(KeyUsages[] keyUsages) {
         try {
-            return keyStoreService.findCACerts();
+            return keyStoreService.findCACerts(keyUsages);
         } catch (Exception e) {
             e.printStackTrace();
         }

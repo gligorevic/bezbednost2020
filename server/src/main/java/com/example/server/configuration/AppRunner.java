@@ -54,7 +54,7 @@ public class AppRunner implements ApplicationRunner {
                 IssuerData issuerData = CertificateGenerator.generateIssuerData("Security Admin", "Tim20", "Tim20Root", "Novi Sad", "tim20@gmail.com", keyPair.getPrivate(), IETFUtils.valueToString(subjectData.getX500name().getRDNs(BCStyle.UID)[0].getFirst().getValue()));
 
                 CertificateGenerator cg = new CertificateGenerator();
-                X509Certificate cert = cg.generateCertificate(subjectData, issuerData, BigInteger.ZERO, new KeyUsages[]{KeyUsages.KEY_CERT_SIGN, KeyUsages.CRL_SIGN }, new Date(), calendar.getTime());
+                X509Certificate cert = cg.generateCertificate(subjectData, issuerData, BigInteger.ZERO, new KeyUsages[]{KeyUsages.CRL_SIGN, KeyUsages.DATA_ENCIPHERMENT, KeyUsages.DECIPHER_ONLY, KeyUsages.DIGITAL_SIGNATURE, KeyUsages.ENCIPHER_ONLY,KeyUsages.KEY_AGREEMENT, KeyUsages.KEY_CERT_SIGN, KeyUsages.KEY_ENCIPHERMENT, KeyUsages.NON_REPUDIATION }, new Date(), calendar.getTime());
 
                 keyStoreService.write(keyStore, "Security Admin", keyPair.getPrivate(), Constants.password.toCharArray(), cert, null);
                 keyStoreService.saveKeyStore(keyStore, Constants.keystoreFilePathRoot, Constants.password.toCharArray());

@@ -109,7 +109,7 @@ public class CertificateGenerator {
         }
         return null;
     }
-    private KeyUsage getKeyUsage(KeyUsages[] keyUsages) throws Exception {
+    public KeyUsage getKeyUsage(KeyUsages[] keyUsages) throws Exception {
         int keyValue = 0;
         for(KeyUsages key : keyUsages) {
             switch(key) {
@@ -117,7 +117,7 @@ public class CertificateGenerator {
                     keyValue = KeyUsage.cRLSign | keyValue;
                     break;
                 case DATA_ENCIPHERMENT:
-                    keyValue = KeyUsage.dataEncipherment | keyValue;
+                    keyValue = KeyUsage.dataEncipherment| keyValue;
                     break;
                 case DECIPHER_ONLY:
                     keyValue = KeyUsage.decipherOnly | keyValue;

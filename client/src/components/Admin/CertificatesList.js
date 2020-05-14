@@ -135,7 +135,7 @@ const CertificatesList = ({ getAllCertificates, certificates, history }) => {
 
   const handleRevoke = async () => {
     const resp = await Axios.put(
-      2`/api/admin/revokeCertificate/${revokeReason}`,
+      `/api/admin/revokeCertificate/${revokeReason}`,
       certificateToRevoke
     );
     if (resp.status === 200) {
