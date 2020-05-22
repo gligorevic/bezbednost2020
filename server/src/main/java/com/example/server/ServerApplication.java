@@ -3,12 +3,14 @@ package com.example.server;
 import com.example.server.enumeration.KeyUsages;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.security.Security;
 
 @EnableScheduling
 @SpringBootApplication
+@EnableEurekaClient
 public class ServerApplication {
 
 	public static void main(String[] args) {
