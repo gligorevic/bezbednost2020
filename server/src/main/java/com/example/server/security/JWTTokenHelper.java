@@ -49,7 +49,7 @@ public class JWTTokenHelper {
         String privilegesString = claims.get("privileges").toString();
 
         privilegesString = privilegesString.replaceFirst("\\[", "");
-        privilegesString = privilegesString.replace("\\]", "");
+        privilegesString = privilegesString.replace("]", "");
 
         String[] privilegesArr = privilegesString.split(", ");
 

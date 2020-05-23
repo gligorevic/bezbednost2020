@@ -33,16 +33,13 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String jwt = getJWTFromRequest(request);
 
-        System.out.println("U pki filteru sam");
         if(StringUtils.hasText(jwt) && jwtTokenHelper.validate(jwt)) {
             String username = jwtTokenHelper.getUserUsernameFromJWT(jwt);
             List<String> privileges = jwtTokenHelper.getPrivilegesFromAccessToken(jwt);
 
-            System.out.println("Velicina privilegija " + privileges.size());
             if(username != null && privileges != null) {
                 Set<SimpleGrantedAuthority> authorities = new HashSet<>();
 
-                System.out.println("Setovao privilegije");
                 for (String privilege : privileges) {
                     authorities.add(new SimpleGrantedAuthority(privilege));
                 }

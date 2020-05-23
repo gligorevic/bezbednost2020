@@ -1,46 +1,27 @@
 package com.example.server.configuration;
 
-import com.example.server.security.AuthenticationTokenFilter;
+import com.example.server.security.JWTAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.header.writers.StaticHeadersWriter;
 
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled=true)
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
-//    @Bean
-//    public JWTAuthenticationFilter jwtAuthenticationFilter() {return new JWTAuthenticationFilter();}
-//
-
     @Bean
-    @Override
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManagerBean();
-    }
+    public JWTAuthenticationFilter jwtAuthenticationFilter() {return new JWTAuthenticationFilter();}
 
-    @Bean
-    public AuthenticationTokenFilter authenticationTokenFilterBean() throws Exception {
-        AuthenticationTokenFilter authenticationTokenFilter = new AuthenticationTokenFilter();
-        authenticationTokenFilter.setAuthenticationManager(authenticationManagerBean());
-        return authenticationTokenFilter;
-    }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.headers().frameOptions().disable();
-
-        http.headers().addHeaderWriter(new StaticHeadersWriter("X-Content-Security-Policy","script-src 'self'"));
-
         http
                 .csrf()
                 .disable()
@@ -53,7 +34,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.OPTIONS).permitAll()
                 .anyRequest().authenticated();
 
-        http.addFilterAfter(authenticationTokenFilterBean(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
     }
 }
 
