@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -18,7 +19,7 @@ public class AdminController {
     @Autowired
     private AdminService adminService;
 
-    //Checked
+    @PreAuthorize("hasAuthority('PKI_ADMINISTRATION')")
     @RequestMapping(value="/createCertificate", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CertificateDTO> issueCertificate(@RequestBody CertificateDTO certificateDTO) {
         try{
@@ -33,7 +34,7 @@ public class AdminController {
         }
     }
 
-    //Checked
+    @PreAuthorize("hasAuthority('PKI_ADMINISTRATION')")
     @RequestMapping(value="/getAllKeyUsages", method = RequestMethod.GET)
     public ResponseEntity<KeyUsages[]> getAllKeyUsages() {
         try {
@@ -44,7 +45,7 @@ public class AdminController {
         }
     }
 
-    //Checked
+    @PreAuthorize("hasAuthority('PKI_ADMINISTRATION')")
     @RequestMapping(value="/getAllIssuerCerts", method = RequestMethod.PUT)
     public ResponseEntity<ArrayList<CertificateExchangeDTO>> getAllIssuerCerts(@RequestBody KeyUsages[] keyUsages) {
         try {
@@ -55,7 +56,7 @@ public class AdminController {
         }
     }
 
-    //Checked
+    @PreAuthorize("hasAuthority('PKI_ADMINISTRATION')")
     @RequestMapping(value = "/getAllCerts", method = RequestMethod.GET)
     public ResponseEntity<ArrayList<CertificateExchangeDTO>> getAllCerts(){
         try{
@@ -66,6 +67,7 @@ public class AdminController {
         }
     }
 
+    @PreAuthorize("hasAuthority('PKI_ADMINISTRATION')")
     @RequestMapping(value = "/getAllRevocatedCerts", method = RequestMethod.GET)
     public ResponseEntity<ArrayList<CertificateExchangeDTO>> getAllRevocatedCerts(){
         try{
@@ -76,7 +78,7 @@ public class AdminController {
         }
     }
 
-    //Checked
+    @PreAuthorize("hasAuthority('PKI_ADMINISTRATION')")
     @RequestMapping(value="/download", method = RequestMethod.PUT)
     public ResponseEntity<CertificateExchangeDTO> downloadCertificate(@RequestBody CertificateExchangeDTO certificateExchangeDTO){
         try{
@@ -92,6 +94,8 @@ public class AdminController {
         }
     }
 
+
+    @PreAuthorize("hasAuthority('PKI_ADMINISTRATION')")
     @RequestMapping(value="/revokeCertificate/{reason}", method = RequestMethod.PUT)
     public ResponseEntity<CertificateExchangeDTO> revokeCertificate(@PathVariable("reason") String reason, @RequestBody CertificateExchangeDTO certificateExchangeDTO){
 
@@ -109,6 +113,7 @@ public class AdminController {
         return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
     }
 
+    @PreAuthorize("hasAuthority('PKI_ADMINISTRATION')")
     @RequestMapping(value = "/check", method = RequestMethod.PUT)
     public ResponseEntity<CertificateExchangeDTO> checkValidity(@RequestBody CertificateExchangeDTO certificateExchangeDTO){
         try{
