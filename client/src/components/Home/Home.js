@@ -1,12 +1,12 @@
 import React from "react";
 import AdminProfil from "../Home/AdminProfil";
+import MainNavbar from "../layouts/Navbar/MainNavbar";
 
 const Home = ({}) => {
-  return (
-    <main>
-      <AdminProfil />
-    </main>
-  );
+  return <>
+    <MainNavbar />
+    <p>Stranica sa oglasima</p>
+    </>;
 };
 
 export default Home;
