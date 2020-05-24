@@ -94,6 +94,10 @@ public class CertificateGenerator {
                 aia_ASN.add(caIssuers);
 
                 certGen.addExtension(Extension.authorityInfoAccess, false, new DERSequence(aia_ASN));
+
+                List<GeneralName> altNames = new ArrayList<GeneralName>();
+                GeneralNames subjectAltNames = GeneralNames.getInstance(new DERSequence((GeneralName[]) altNames.toArray(new GeneralName[] {})));
+                certGen.addExtension(Extension.subjectAlternativeName, false, subjectAltNames);
             }catch(Exception e) {
                 e.printStackTrace();
             }

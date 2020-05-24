@@ -23,6 +23,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.io.FileOutputStream;
@@ -171,9 +172,12 @@ public class AdminService {
         try{
             System.out.println(certificateExchangeDTO.getName());
             Certificate certificate = keyStoreService.readCertificate(certificateExchangeDTO.getSerialNumber() + "*" + certificateExchangeDTO.getName());
-            String path = System.getProperty("user.home") + "/Downloads/";
+            String path =   "./Downloads:";
 
-            FileOutputStream os = new FileOutputStream(path + certificateExchangeDTO.getName() + ".cer");
+            File file = new File(path + certificateExchangeDTO.getName() + ".cer");
+            FileOutputStream os = new FileOutputStream(file);
+            System.out.println(file.getAbsolutePath());
+
             os.write(Base64.encodeBase64(certificate.getEncoded(), true));
             os.close();
             return certificateExchangeDTO;
