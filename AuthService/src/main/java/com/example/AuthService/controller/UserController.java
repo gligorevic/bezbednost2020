@@ -1,8 +1,10 @@
 package com.example.AuthService.controller;
 
 import com.example.AuthService.domain.Privilege;
+import com.example.AuthService.domain.User;
 import com.example.AuthService.dto.LoginRequestDTO;
 import com.example.AuthService.dto.PrivilegeChangeDTO;
+import com.example.AuthService.dto.UserDTO;
 import com.example.AuthService.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -35,6 +37,29 @@ public class UserController {
             return new ResponseEntity<>("Bad request", HttpStatus.BAD_REQUEST);
         }
     }
+
+    @PostMapping("/user")
+    public ResponseEntity<?> register(@RequestBody UserDTO userDTO) {
+        try {
+            return new ResponseEntity<UserDTO>(userService.register(userDTO), HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("Bad request", HttpStatus.BAD_REQUEST);
+        }
+    }
+
+
+    @GetMapping("/user/{email}")
+    @PreAuthorize("hasAuthority('PROFILE_VIEWING')")
+    public ResponseEntity<?> getUserProfile(@PathVariable String email, Authentication authentication) {
+        try {
+            return new ResponseEntity<User>(userService.getUser(email, authentication), HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("Bad request", HttpStatus.BAD_REQUEST);
+        }
+    }
+
 
     @PostMapping("/verify")
     public ResponseEntity<?> verifyUser(@RequestBody String bearerToken) {

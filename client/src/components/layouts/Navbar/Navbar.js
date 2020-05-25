@@ -11,6 +11,8 @@ import Menu from "@material-ui/core/Menu";
 import { withRouter } from "react-router-dom";
 import MenuIcon from "@material-ui/icons/Menu";
 import clsx from "clsx";
+import { logout } from "../../../store/actions/auth" 
+import { connect } from "react-redux";
 
 const drawerWidth = 240;
 
@@ -43,7 +45,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const AppBarLogedIn = ({ open, handleDrawerOpen }) => {
+const AppBarLogedIn = ({ open, handleDrawerOpen, logout }) => {
   const classes = useStyles();
 
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -79,7 +81,7 @@ const AppBarLogedIn = ({ open, handleDrawerOpen }) => {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" className={classes.title}>
-            Certification administrator
+            Administrator
           </Typography>
 
           <div>
@@ -108,7 +110,10 @@ const AppBarLogedIn = ({ open, handleDrawerOpen }) => {
         open={isMenuOpen}
         onClose={handleMenuClose}
       >
-        <MenuItem id="logout" onClick={() => {}}>
+        <MenuItem id="logout" onClick={() => {
+          handleMenuClose();
+          logout();
+        }}>
           Log out
         </MenuItem>
       </Menu>
@@ -116,4 +121,10 @@ const AppBarLogedIn = ({ open, handleDrawerOpen }) => {
   );
 };
 
-export default withRouter(AppBarLogedIn);
+function mapStateToProps(state) {
+  return {
+    user: state.user
+  };
+}
+
+export default withRouter(connect(mapStateToProps, { logout })(AppBarLogedIn));
