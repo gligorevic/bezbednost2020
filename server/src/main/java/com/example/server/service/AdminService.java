@@ -1,7 +1,6 @@
 package com.example.server.service;
 
 import com.example.server.Model.CertificateModel;
-
 import com.example.server.certificates.CertificateGenerator;
 import com.example.server.certificates.Constants;
 import com.example.server.data.IssuerData;
@@ -10,28 +9,22 @@ import com.example.server.dto.CertificateDTO;
 import com.example.server.dto.CertificateExchangeDTO;
 import com.example.server.enumeration.KeyUsages;
 import org.apache.tomcat.util.codec.binary.Base64;
-import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x500.style.IETFUtils;
-import org.bouncycastle.asn1.x509.PrivateKeyUsagePeriod;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
-import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.math.BigInteger;
+import java.io.File;
 import java.io.FileOutputStream;
-
+import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.cert.*;
-import java.text.ParseException;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -171,7 +164,7 @@ public class AdminService {
         try{
             System.out.println(certificateExchangeDTO.getName());
             Certificate certificate = keyStoreService.readCertificate(certificateExchangeDTO.getSerialNumber() + "*" + certificateExchangeDTO.getName());
-            String path = System.getProperty("user.home") + "/Downloads/";
+            String path = System.getProperty("user.home") + File.separator + "Downloads" + File.separator;
 
             FileOutputStream os = new FileOutputStream(path + certificateExchangeDTO.getName() + ".cer");
             os.write(Base64.encodeBase64(certificate.getEncoded(), true));
