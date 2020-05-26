@@ -2,12 +2,14 @@ import React from "react";
 import { Provider } from "react-redux";
 import "./App.css";
 import Admin from "./components/Admin/Admin";
-import AdminProfile from "./components/Home/AdminProfil";
+import AdminHome from "./components/Home/AdminHome";
+import UserHome from "./components/Home/UserHome";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import { configureStore } from "./store/index";
 import Home from "./components/Home/Home";
 import Login from "./components/Pages/Login";
 import PrivateAdminRoute from "./routing/PrivateAdminRoute";
+import PrivateUserRoute from "./routing/PrivateUserRoute";
 import { setAuthorizationToken, setUser } from "./store/actions/auth";
 import jwtDecode from "jwt-decode";
 import Registration from "./components/Pages/Registration";
@@ -39,7 +41,8 @@ function App() {
     <Provider store={store}>
       <Router className="App">
         <Switch>
-          <PrivateAdminRoute exact path="/admin" component={AdminProfile} />
+          <PrivateAdminRoute exact path="/admin" component={AdminHome} />
+          <PrivateUserRoute exact path="/user" component={UserHome} />
           <PrivateAdminRoute
             exact
             path="/admin/issueCertificate"

@@ -1,8 +1,9 @@
 import { combineReducers } from "redux";
 import certificates from "./certificates";
 import user from "./user";
+import profile from "./profile";
 
-const appReducer = combineReducers({ certificates, user });
+const appReducer = combineReducers({ certificates, user, profile });
 
 const rootReducer = (state, action) => {
   if (action.type === "USER_LOGOUT") {

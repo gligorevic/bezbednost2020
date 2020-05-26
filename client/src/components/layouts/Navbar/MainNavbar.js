@@ -180,6 +180,11 @@ const MainNavbar = ({
                       switch (user.role.length > 0 && user.role[0].name) {
                         case "ROLE_ADMIN":
                           history.push("/admin");
+                          break;
+                        case "ROLE_ENDUSER":
+                        case "ROLE_AGENT":
+                          history.push("/user");
+                          break;
                       }
                     }}
                   >

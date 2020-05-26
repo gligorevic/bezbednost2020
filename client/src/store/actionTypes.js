@@ -5,3 +5,5 @@ export const SET_ALL_REVOCATED_CERTS = "SET_ALL_REVOCATED_CERTS";
 
 export const SET_CURRENT_USER = "SET_CURRENT_USER";
 export const USER_LOGOUT = "USER_LOGOUT";
+
+export const SET_PROFILE = "SET_PROFILE";
