@@ -21,7 +21,11 @@ import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
 import InboxIcon from "@material-ui/icons/MoveToInbox";
 import { withRouter } from "react-router-dom";
-import MailIcon from "@material-ui/icons/Mail";
+import { connect } from "react-redux";
+import { logout } from "../../../store/actions/auth";
+import AccountCircleIcon from "@material-ui/icons/AccountCircle";
+import ExitToAppIcon from "@material-ui/icons/ExitToApp";
+import DirectionsCarIcon from "@material-ui/icons/DirectionsCar";
 
 const drawerWidth = 240;
 
@@ -34,6 +38,8 @@ const useStyles = makeStyles((theme) => ({
   },
   title: {
     flexGrow: 1,
+    display: "flex",
+    alignItems: "center",
   },
   appBar: {
     transition: theme.transitions.create(["margin", "width"], {
@@ -83,9 +89,23 @@ const useStyles = makeStyles((theme) => ({
     }),
     marginLeft: 0,
   },
+  username: {
+    fontSize: 15,
+    fontWeight: "bold",
+    marginLeft: 20,
+    marginRight: 5,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
 }));
 
-const MainNavbar = ({ history }) => {
+const MainNavbar = ({
+  history,
+  location,
+  logout,
+  user: { isAuthenticated, user },
+}) => {
   const classes = useStyles();
   const theme = useTheme();
   const tablet = useMediaQuery(theme.breakpoints.up("sm"));
@@ -116,17 +136,76 @@ const MainNavbar = ({ history }) => {
           )}
 
           <Typography variant="h6" className={classes.title}>
+            <DirectionsCarIcon
+              style={{ fontSize: 32, paddingBottom: 5, marginRight: 4 }}
+            />
             Rentaj care
           </Typography>
           {tablet && (
             <>
-              <Button color="inherit">Home</Button>
-              <Button color="inherit">Profile</Button>
-              <Button color="inherit">MenuItem</Button>
-              <Button color="inherit">MenuItem</Button>
-              <Button color="inherit" onClick={() => history.push("/login")}>
-                Login
+              <Button
+                color="inherit"
+                onClick={() => location.pathname !== "/" && history.push("/")}
+              >
+                Home
               </Button>
+
+              <Button color="inherit">MenuItem</Button>
+              <Button color="inherit">MenuItem</Button>
+              {!isAuthenticated ? (
+                <>
+                  <Button
+                    color="inherit"
+                    onClick={() =>
+                      location.pathname !== "/login" && history.push("/login")
+                    }
+                  >
+                    Login
+                  </Button>
+                  <Button
+                    color="inherit"
+                    onClick={() =>
+                      location.pathname !== "/registration" &&
+                      history.push("/registration")
+                    }
+                  >
+                    Registrate
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    color="inherit"
+                    onClick={() => {
+                      switch (user.role.length > 0 && user.role[0].name) {
+                        case "ROLE_ADMIN":
+                          history.push("/admin");
+                          break;
+                        case "ROLE_ENDUSER":
+                        case "ROLE_AGENT":
+                          history.push("/user");
+                          break;
+                      }
+                    }}
+                  >
+                    Profile
+                  </Button>
+                  <div className={classes.username}>
+                    <AccountCircleIcon />
+                    <p style={{ paddingLeft: 5 }}>{user.username}</p>
+                  </div>
+                  <Button
+                    color="inherit"
+                    onClick={() => {
+                      logout();
+                      history.push("/");
+                    }}
+                  >
+                    <ExitToAppIcon />
+                    Logout
+                  </Button>
+                </>
+              )}
             </>
           )}
         </Toolbar>
@@ -180,4 +259,10 @@ const MainNavbar = ({ history }) => {
   );
 };
 
-export default withRouter(MainNavbar);
+function mapStateToProps(state) {
+  return {
+    user: state.user,
+  };
+}
+
+export default withRouter(connect(mapStateToProps, { logout })(MainNavbar));

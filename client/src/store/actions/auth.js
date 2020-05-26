@@ -37,3 +37,13 @@ export const authUser = (userData) => async (dispatch) => {
     console.log(err);
   }
 };
+
+export const registrate = (userData) => async (dispatch) => {
+  try {
+    const response = await axios.post("/auth/user", userData);
+    return response;
+  } catch (err) {
+    console.log(err);
+    return err.response;
+  }
+};

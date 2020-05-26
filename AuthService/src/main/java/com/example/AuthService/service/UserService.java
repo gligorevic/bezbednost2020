@@ -5,11 +5,13 @@ import com.example.AuthService.domain.Role;
 import com.example.AuthService.domain.User;
 import com.example.AuthService.dto.LoginRequestDTO;
 import com.example.AuthService.dto.UserDTO;
+import com.example.AuthService.exception.CustomException;
 import com.example.AuthService.repository.PrivilegeRepository;
 import com.example.AuthService.repository.RoleRepository;
 import com.example.AuthService.repository.UserRepository;
 import com.example.AuthService.security.JWTTokenHelper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -102,21 +104,24 @@ public class UserService {
     }
 
 
-    public UserDTO register(UserDTO userDTO) throws Exception {
+    public UserDTO register(UserDTO userDTO) throws Exception, CustomException {
         User user = userRepository.findByEmail(userDTO.getEmail());
 
         if(user != null) {
-            throw new Exception("User already exist");
+            throw new CustomException("User already exist", HttpStatus.BAD_REQUEST);
         }
 
         Role role = roleRepository.findByName(userDTO.getRoleName());
 
         if(role == null || role.getName().equals("ROLE_ADMIN")) {
-            throw new Exception("Role doesn't exist");
+            throw new CustomException("Role doesn't exist", HttpStatus.BAD_REQUEST);
         }
 
         User newUser = new User(userDTO);
+        List<Role> roleList = new ArrayList<>();
+        roleList.add(role);
 
+        newUser.setRoles(roleList);
         newUser.setPassword(bCryptPasswordEncoder.encode(userDTO.getPassword()));
 
         userRepository.save(newUser);
