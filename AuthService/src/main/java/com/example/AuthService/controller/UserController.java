@@ -1,23 +1,17 @@
 package com.example.AuthService.controller;
 
-import com.example.AuthService.domain.Privilege;
 import com.example.AuthService.domain.User;
 import com.example.AuthService.dto.LoginRequestDTO;
 import com.example.AuthService.dto.PrivilegeChangeDTO;
 import com.example.AuthService.dto.UserDTO;
+import com.example.AuthService.exception.CustomException;
 import com.example.AuthService.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import java.util.List;
 
 import static com.example.AuthService.security.SecurityConstants.TOKEN_BEARER_PREFIX;
 
@@ -32,7 +26,8 @@ public class UserController {
     public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginRequestDTO) {
         try {
             return new ResponseEntity<String>(userService.login(loginRequestDTO), HttpStatus.OK);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity<>("Bad request", HttpStatus.BAD_REQUEST);
         }
@@ -42,6 +37,9 @@ public class UserController {
     public ResponseEntity<?> register(@RequestBody UserDTO userDTO) {
         try {
             return new ResponseEntity<UserDTO>(userService.register(userDTO), HttpStatus.OK);
+        } catch (CustomException e){
+            e.printStackTrace();
+            return new ResponseEntity<>(e.getMessage(), e.getHttpStatus());
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity<>("Bad request", HttpStatus.BAD_REQUEST);

@@ -10,6 +10,7 @@ import Login from "./components/Pages/Login";
 import PrivateAdminRoute from "./routing/PrivateAdminRoute";
 import { setAuthorizationToken, setUser } from "./store/actions/auth";
 import jwtDecode from "jwt-decode";
+import Registration from "./components/Pages/Registration";
 
 const store = configureStore();
 
@@ -38,7 +39,6 @@ function App() {
     <Provider store={store}>
       <Router className="App">
         <Switch>
-          <Route exact path="/" component={Home} />
           <PrivateAdminRoute exact path="/admin" component={AdminProfile} />
           <PrivateAdminRoute
             exact
@@ -46,6 +46,12 @@ function App() {
             component={Admin}
           />
           <Route exact path="/login" render={(props) => <Login {...props} />} />
+          <Route
+            exact
+            path="/registration"
+            render={(props) => <Registration {...props} />}
+          />
+          <Route path="/*" component={Home} />
         </Switch>
       </Router>
     </Provider>
