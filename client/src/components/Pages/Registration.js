@@ -148,14 +148,14 @@ const SignUp = ({ registrate, user, history }) => {
                   value={state.email}
                   error={
                     (submitedEmail === state.email && responseStatus === 400) ||
-                    (state.email.length > 5 &&
-                      state.email.match(/^\S+@\S+$/) === null)
+                    (state.email.length > 2 &&
+                      state.email.match(/^\S+@\S+\.\S+$/) === null)
                   }
                   helperText={
                     submitedEmail === state.email && responseStatus === 400
                       ? "User Already Exists"
-                      : state.email.length > 5 &&
-                        state.email.match(/^\S+@\S+$/) === null &&
+                      : state.email.length > 2 &&
+                        state.email.match(/^\S+@\S+\.\S+$/) === null &&
                         "Email format is example@gmail.com"
                   }
                   autoFocus={responseStatus === 400}
@@ -172,11 +172,20 @@ const SignUp = ({ registrate, user, history }) => {
                   id="password"
                   onChange={handleChange}
                   value={state.password}
-                  error={state.password.length < 6 && state.password.length > 0}
-                  helperText={
-                    state.password.length < 6 &&
+                  error={
                     state.password.length > 0 &&
-                    "Password must have at least 6 characters."
+                    state.password.match(
+                      /^(?=.*[0-9])(?=.*[A-Z])(?=.*[a-z])[a-zA-Z0-9!@#$%^&*]{6,25}$/
+                    ) === null
+                  }
+                  helperText={
+                    state.password.length < 6 && state.password.length > 0
+                      ? "Password must have at least 6 characters."
+                      : state.password.length > 6 &&
+                        state.password.match(
+                          /^(?=.*[0-9])(?=.*[A-Z])(?=.*[a-z])[a-zA-Z0-9!@#$%^&*]{6,25}$/
+                        ) === null &&
+                        "Password must have one number, one upper-case letter and one lower-case letter."
                   }
                 />
               </Grid>
@@ -249,8 +258,11 @@ const SignUp = ({ registrate, user, history }) => {
                 state.lastName.length < 2 ||
                 state.password.length < 6 ||
                 state.password !== state.passwordRepeated ||
-                state.email.match(/^\S+@\S+$/) === null ||
-                state.email === submitedEmail
+                state.email.match(/^\S+@\S+\.\S+$/) === null ||
+                state.email === submitedEmail ||
+                state.password.match(
+                  /^(?=.*[0-9])(?=.*[A-Z])(?=.*[a-z])[a-zA-Z0-9!@#$%^&*]{6,25}$/
+                ) === null
               }
             >
               Sign Up

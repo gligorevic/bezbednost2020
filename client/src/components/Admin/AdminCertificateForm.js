@@ -154,12 +154,14 @@ const AdminCertificateForm = ({
               <TextField
                 name="commonName"
                 onChange={handleChangeTextField}
+                required
                 value={state.commonName}
                 label="CommonName"
               />
               <TextField
                 name="organization"
                 onChange={handleChangeTextField}
+                required
                 value={state.organization}
                 label="Organization"
               />
@@ -167,31 +169,46 @@ const AdminCertificateForm = ({
                 name="organizationalUnit"
                 onChange={handleChangeTextField}
                 value={state.organizationalUnit}
+                required
                 label="Organization Unit"
               />
               <TextField
                 name="city"
                 onChange={handleChangeTextField}
                 value={state.city}
+                required
                 label="City"
               />
               <TextField
                 name="countryOfState"
                 onChange={handleChangeTextField}
                 value={state.countryOfState}
+                required
                 label="CountryOfState"
               />
               <TextField
                 name="country"
                 onChange={handleChangeTextField}
                 value={state.country}
+                required
                 label="Country"
               />
               <TextField
                 name="mail"
                 onChange={handleChangeTextField}
                 value={state.mail}
+                type="email"
+                required
                 label="Mail"
+                error={
+                  state.mail.length > 2 &&
+                  state.mail.match(/^\S+@\S+\.\S+$/) === null
+                }
+                helperText={
+                  state.mail.length > 2 &&
+                  state.mail.match(/^\S+@\S+\.\S+$/) === null &&
+                  "Email format is example@gmail.com"
+                }
               />
             </Paper>
             <Paper className={classes.certificateUsage}>
