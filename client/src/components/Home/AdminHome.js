@@ -14,6 +14,9 @@ import clsx from "clsx";
 import CertificatesList from "../Admin/CertificatesList";
 import RevocatedCertsList from "../Admin/RevocatedCertsList";
 import TabPanel from "../layouts/TabPanel";
+
+import Profile from "../Pages/Profile";
+
 const drawerWidth = 240;
 
 const useStyles = makeStyles((theme) => ({
@@ -97,6 +100,7 @@ function AdminHome(props) {
       >
         <Tab label="List of certificates" {...a11yProps(0)} />
         <Tab label="Revocated certificates" {...a11yProps(1)} />
+        <Tab label="Profile" {...a11yProps(1)} />
       </Tabs>
     </div>
   );
@@ -132,6 +136,9 @@ function AdminHome(props) {
           </TabPanel>
           <TabPanel value={value} index={1}>
             {value === 1 && <RevocatedCertsList />}
+          </TabPanel>
+          <TabPanel value={value} index={2}>
+            {value === 2 && <Profile />}
           </TabPanel>
         </main>
       </div>
