@@ -20,7 +20,7 @@ services:
   zuul:
     build: ./Zuul
     ports:
-      - "8083:8083"
+      - "8443:8443"
     environment:
       - REGISTRY_HOST=eureka-serviceregistry
     tty: true
