@@ -226,6 +226,8 @@ export default function HorizontalLinearStepper() {
                   disabled={
                     usages.length === 0 ||
                     !Object.values(state).every((field) => field !== "") ||
+                    (activeStep === 0 &&
+                      state.mail.match(/^\S+@\S+\.\S+$/) === null) ||
                     (activeStep === 1 && certificate === "") ||
                     (activeStep === 2 &&
                       selectedDateEnd &&

@@ -99,6 +99,8 @@ const Login = ({ authUser, user, history }) => {
               required
               fullWidth
               id="email"
+              type="email"
+              placeholder="name@example.com"
               label="Email Address"
               name="email"
               autoComplete="email"
@@ -128,6 +130,7 @@ const Login = ({ authUser, user, history }) => {
               fullWidth
               variant="contained"
               color="primary"
+              disabled={state.password === "" || state.email === ""}
               className={classes.submit}
             >
               Sign In
